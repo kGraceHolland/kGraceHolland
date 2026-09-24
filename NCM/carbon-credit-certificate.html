@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Carbon Credit Certificate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mona+Sans:ital,wght@0,200..900;1,200..900&family=Mona+Sans+SemiCondensed:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    /* NCM Design System tokens */
+    --brand: #4fd4e1;
+    --brand-hover: #2fb8c5;
+    --brand-dark: #155359;
+    --brand-darkest: #0b3a40;
+    --brand-extralight: #d5f8fc;
+    --brand-focus: #72e6f2;
+
+    --text-primary: #0c0a09;
+    --text-inverse: #fafaf9;
+    --text-secondary: #78716c;
+    --text-primary-hover: #44403c;
+
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f5f4;
+    --bg-tertiary: #e7e5e4;
+    --bg-inverse: #1c1917;
+    --bg-dark-hover: #44403c;
+
+    --border-primary: #d6d3d1;
+    --border-secondary: #a8a29e;
+    --border-tertiary: #f5f5f4;
+
+    --removal-fg: #3f6212;
+    --removal-bg: #ecfccb;
+    --removal-solid: #65a30d;
+    --removal-border: #d9f99d;
+
+    --reduction-fg: #1d4ed8;
+    --reduction-bg: #dce9ff;
+    --reduction-solid: #1d4ed8;
+    --reduction-border: #dbeafe;
+
+    --retention-fg: #7e22ce;
+    --retention-bg: #f3e8ff;
+    --retention-solid: #7e22ce;
+    --retention-border: #f3e8ff;
+
+    --font-sans: 'Mona Sans', system-ui, sans-serif;
+    --font-condensed: 'Mona Sans SemiCondensed', 'Mona Sans', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; font-family: var(--font-sans); }
+  body {
+    margin: 0;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    padding: 32px 16px;
+    font: 400 15px/22px var(--font-sans);
+  }
+  button { cursor: pointer; font-family: inherit; }
+  button:disabled { cursor: not-allowed; opacity: 0.6; }
+  input { font-family: inherit; }
+
+  .container { max-width: 1280px; margin: 0 auto; }
+
+  .header {
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .header h1 {
+    font: 700 28px/36px var(--font-condensed);
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .header p {
+    font: 400 15px/22px var(--font-sans);
+    color: var(--text-secondary);
+    margin: 4px 0 0;
+  }
+
+  .mode-switch {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-primary);
+    border-radius: 10px;
+    padding: 4px;
+    border: 1px solid var(--border-primary);
+  }
+  .mode-btn {
+    padding: 8px 14px;
+    border-radius: 6px;
+    font: 600 14px/18px var(--font-condensed);
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    color: var(--text-secondary);
+  }
+  .mode-btn.active {
+    background: var(--bg-inverse);
+    color: var(--text-inverse);
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(340px, 380px) 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  .layout.preview { grid-template-columns: 1fr; }
+
+  .panel {
+    background: var(--bg-primary);
+    border-radius: 12px;
+    border: 1px solid var(--border-primary);
+    padding: 24px;
+    position: sticky;
+    top: 24px;
+  }
+  .panel h2 {
+    font: 700 22px/28px var(--font-condensed);
+    margin: 0 0 4px;
+  }
+  .panel-desc {
+    font: 400 15px/22px var(--font-sans);
+    color: var(--text-secondary);
+    margin: 0 0 20px;
+  }
+
+  .fields { display: flex; flex-direction: column; gap: 16px; }
+
+  .field label {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    font: 600 14px/18px var(--font-condensed);
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    gap: 8px;
+  }
+  .field .hint, .field .optional {
+    font: 400 12px/16px var(--font-condensed);
+    color: var(--text-secondary);
+  }
+  .field .optional { margin-left: 6px; }
+
+  .ncm-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    font: 400 15px/22px var(--font-sans);
+    color: var(--text-primary);
+    background: var(--bg-primary);
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .ncm-input::placeholder { color: var(--text-secondary); }
+  .ncm-input:hover { border-color: var(--brand-dark); }
+  .ncm-input:focus {
+    border-color: var(--brand-hover);
+    box-shadow: 0 0 0 3px rgba(114, 230, 242, 0.4);
+  }
+
+  .volume-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px 8px 12px;
+    border: 1px solid var(--border-primary);
+    background: var(--bg-primary);
+    border-radius: 8px;
+    transition: all 0.15s;
+  }
+  .volume-row.active[data-type="removal"]  { border-color: var(--removal-solid);  background: var(--removal-bg); }
+  .volume-row.active[data-type="reduction"] { border-color: var(--reduction-solid); background: var(--reduction-bg); }
+  .volume-row.active[data-type="retention"] { border-color: var(--retention-solid); background: var(--retention-bg); }
+
+  .volume-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 100px;
+    color: var(--text-secondary);
+    font: 600 14px/18px var(--font-condensed);
+  }
+  .volume-row.active[data-type="removal"] .volume-label  { color: var(--removal-fg); }
+  .volume-row.active[data-type="reduction"] .volume-label { color: var(--reduction-fg); }
+  .volume-row.active[data-type="retention"] .volume-label { color: var(--retention-fg); }
+
+  .volume-input {
+    flex: 1;
+    padding: 6px 8px;
+    border: none;
+    background: transparent;
+    outline: none;
+    font: 400 15px/22px var(--font-sans);
+    text-align: right;
+    color: var(--text-primary);
+  }
+  .volume-row.active .volume-input { font-weight: 600; }
+
+  .total-box {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: var(--brand-extralight);
+    border-radius: 8px;
+    display: none;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .total-box.show { display: flex; }
+  .total-label { font: 600 14px/18px var(--font-condensed); color: var(--brand-dark); }
+  .total-value { font: 700 14px/18px var(--font-condensed); color: var(--brand-darkest); }
+
+  .action-row {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-tertiary);
+    display: flex;
+    gap: 8px;
+  }
+
+  .ncm-btn {
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font: 600 14px/18px var(--font-condensed);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.15s;
+  }
+  .ncm-btn-primary { background: var(--brand); color: var(--text-primary); }
+  .ncm-btn-primary:not(:disabled):hover { background: var(--brand-hover); }
+  .ncm-btn-dark { background: var(--bg-inverse); color: var(--text-inverse); }
+  .ncm-btn-dark:not(:disabled):hover { background: var(--bg-dark-hover); }
+  .ncm-btn-outlined { background: transparent; color: var(--text-primary); border: 1px solid var(--border-secondary); }
+  .ncm-btn-outlined:not(:disabled):hover { border-color: var(--text-primary-hover); }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+
+  /* Certificate */
+  .certificate {
+    background: var(--bg-primary);
+    border-radius: 16px;
+    border: 2px solid var(--brand);
+    padding: 56px 48px;
+    position: relative;
+    box-shadow: 0 1px 3px rgba(12, 10, 9, 0.04), 0 4px 12px rgba(12, 10, 9, 0.04);
+  }
+  .corner-mark {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    opacity: 0.35;
+  }
+  .corner-mark.tl { top: 20px; left: 20px;  border-top: 2px solid var(--brand-hover); border-left: 2px solid var(--brand-hover); }
+  .corner-mark.tr { top: 20px; right: 20px; border-top: 2px solid var(--brand-hover); border-right: 2px solid var(--brand-hover); }
+  .corner-mark.bl { bottom: 20px; left: 20px;  border-bottom: 2px solid var(--brand-hover); border-left: 2px solid var(--brand-hover); }
+  .corner-mark.br { bottom: 20px; right: 20px; border-bottom: 2px solid var(--brand-hover); border-right: 2px solid var(--brand-hover); }
+
+  .cert-pill {
+    background: var(--brand);
+    color: var(--text-primary);
+    padding: 10px 24px;
+    border-radius: 999px;
+    font: 600 14px/18px var(--font-condensed);
+    letter-spacing: 0.12em;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .center-row { display: flex; justify-content: center; }
+
+  .cert-subtitle {
+    text-align: center;
+    color: var(--text-secondary);
+    font: 600 12px/16px var(--font-condensed);
+    letter-spacing: 0.18em;
+    margin: 20px 0 40px;
+  }
+
+  .cert-presented {
+    font: 400 18px/28px var(--font-sans);
+    color: var(--text-secondary);
+    margin: 0 0 12px;
+    text-align: center;
+  }
+
+  .cert-buyer {
+    font: 700 56px/64px var(--font-condensed);
+    letter-spacing: -0.03em;
+    margin: 0 0 20px;
+    min-height: 64px;
+    text-align: center;
+    color: var(--text-primary);
+  }
+  .cert-buyer.empty {
+    color: var(--border-secondary);
+    font-style: italic;
+    font-weight: 400;
+  }
+
+  .cert-total {
+    font: 400 18px/28px var(--font-sans);
+    color: var(--text-secondary);
+    text-align: center;
+    margin: 0 0 28px;
+  }
+  .cert-total strong { color: var(--text-primary); font-weight: 700; }
+
+  .cert-pills { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 600px; margin: 0 auto 32px; }
+  .cert-pill-type {
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 999px;
+    font: 600 14px/18px var(--font-condensed);
+    letter-spacing: 0.08em;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .cert-pill-type.removal  { background: var(--removal-solid); }
+  .cert-pill-type.reduction { background: var(--reduction-solid); }
+  .cert-pill-type.retention { background: var(--retention-solid); }
+  .cert-pill-empty {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    padding: 10px 24px;
+    border-radius: 999px;
+    font: 600 14px/18px var(--font-condensed);
+    letter-spacing: 0.12em;
+    font-style: italic;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border-tertiary);
+    margin: 32px 0;
+  }
+
+  .details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 32px;
+  }
+  .detail-label {
+    font: 600 12px/16px var(--font-condensed);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+    margin: 0 0 4px;
+  }
+  .detail-value {
+    font: 600 18px/28px var(--font-sans);
+    color: var(--text-primary);
+    margin: 0;
+  }
+  .detail-value.empty { color: var(--border-secondary); font-style: italic; }
+  .detail-value.mono { font-family: ui-monospace, SFMono-Regular, monospace; }
+  .project-full { grid-column: 1 / -1; }
+
+  .composition {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+  .composition-title {
+    font: 600 12px/16px var(--font-condensed);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+    margin: 0 0 12px;
+  }
+  .composition-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-tertiary);
+  }
+  .composition-row:last-child { border-bottom: none; }
+  .composition-left { display: flex; align-items: center; gap: 10px; }
+  .composition-icon {
+    width: 24px; height: 24px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .composition-icon.removal  { background: var(--removal-bg);  color: var(--removal-fg); }
+  .composition-icon.reduction { background: var(--reduction-bg); color: var(--reduction-fg); }
+  .composition-icon.retention { background: var(--retention-bg); color: var(--retention-fg); }
+  .composition-name { font: 500 15px/22px var(--font-sans); }
+  .composition-right { display: flex; align-items: baseline; gap: 12px; }
+  .composition-pct { font: 600 12px/16px var(--font-condensed); color: var(--text-secondary); }
+  .composition-value { font: 700 15px/22px var(--font-sans); min-width: 120px; text-align: right; }
+
+  .description {
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 40px;
+    text-align: center;
+    font: 500 15px/22px var(--font-sans);
+  }
+  .description.removal   { background: var(--removal-bg);   border: 1px solid var(--removal-border);   color: var(--removal-fg); }
+  .description.reduction { background: var(--reduction-bg); border: 1px solid var(--reduction-border); color: var(--reduction-fg); }
+  .description.retention { background: var(--retention-bg); border: 1px solid var(--retention-border); color: var(--retention-fg); }
+  .description.bundle    { background: var(--bg-secondary); border: 1px solid var(--border-primary);   color: var(--text-primary); }
+
+  .signature {
+    display: flex;
+    justify-content: center;
+    padding-top: 8px;
+  }
+  .signature-inner { text-align: center; }
+  .signature-line {
+    width: 280px;
+    height: 1px;
+    background: var(--border-secondary);
+    margin: 0 auto 10px;
+  }
+  .signature-title { font: 600 14px/18px var(--font-condensed); color: var(--text-primary); margin: 0; }
+  .signature-sub {
+    font: 600 12px/16px var(--font-condensed);
+    color: var(--text-secondary);
+    margin: 4px 0 0;
+    letter-spacing: 0.08em;
+  }
+
+  .preview-actions {
+    margin-top: 16px;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+  }
+
+  .hidden { display: none !important; }
+
+  /* Icons via SVG */
+  .icon { display: inline-block; vertical-align: middle; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div>
+      <h1>Carbon Credit Certificate</h1>
+      <p>Generate and issue verified credit certificates</p>
+    </div>
+    <div class="mode-switch">
+      <button class="mode-btn active" data-mode="edit">
+        <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        Edit
+      </button>
+      <button class="mode-btn" data-mode="preview">
+        <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        Preview
+      </button>
+    </div>
+  </div>
+
+  <div class="layout" id="layout">
+    <!-- Input Panel -->
+    <div class="panel" id="panel">
+      <h2>Certificate details</h2>
+      <p class="panel-desc">Enter any combination of credit types.</p>
+
+      <div class="fields">
+        <div class="field">
+          <label>Transaction ID</label>
+          <input class="ncm-input" type="text" id="transactionId" placeholder="TRN-2026-00123" />
+        </div>
+
+        <div class="field">
+          <label>Buyer name</label>
+          <input class="ncm-input" type="text" id="buyer" placeholder="e.g. Inditex S.A." />
+        </div>
+
+        <div>
+          <label style="display:flex; justify-content:space-between; align-items:baseline; font: 600 14px/18px var(--font-condensed); color: var(--text-primary); margin-bottom:8px;">
+            <span>Credit volumes</span>
+            <span class="hint">tCO₂e per type</span>
+          </label>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <div class="volume-row" data-type="removal">
+              <span class="volume-label">
+                <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19.2 2.96c1.4 3.35 1 6.68 1 8.08 0 5.5-4.78 8.96-9.2 8.96z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/></svg>
+                Removal
+              </span>
+              <input type="number" min="0" class="volume-input" data-type="removal" placeholder="0" />
+            </div>
+            <div class="volume-row" data-type="reduction">
+              <span class="volume-label">
+                <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                Reduction
+              </span>
+              <input type="number" min="0" class="volume-input" data-type="reduction" placeholder="0" />
+            </div>
+            <div class="volume-row" data-type="retention">
+              <span class="volume-label">
+                <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Retention
+              </span>
+              <input type="number" min="0" class="volume-input" data-type="retention" placeholder="0" />
+            </div>
+          </div>
+          <div class="total-box" id="totalBox">
+            <span class="total-label">Total</span>
+            <span class="total-value" id="totalValue">0 tCO₂e</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Project name <span class="optional">(optional)</span></label>
+          <input class="ncm-input" type="text" id="projectName" placeholder="e.g. Cultiva Carbono" />
+        </div>
+
+        <div class="field">
+          <label>Issue date</label>
+          <input class="ncm-input" type="text" id="issueDate" />
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="ncm-btn ncm-btn-dark" style="flex:1;" id="downloadBtn">
+          <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download PDF
+        </button>
+        <button class="ncm-btn ncm-btn-primary" id="shareBtn" aria-label="Share">
+          <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Certificate -->
+    <div>
+      <div class="certificate" id="certificate">
+        <div class="corner-mark tl"></div>
+        <div class="corner-mark tr"></div>
+        <div class="corner-mark bl"></div>
+        <div class="corner-mark br"></div>
+
+        <div class="center-row">
+          <div class="cert-pill">
+            <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+            CARBON CREDIT CERTIFICATE
+          </div>
+        </div>
+
+        <p class="cert-subtitle">OFFICIAL CERTIFICATE OF CARBON CREDITS</p>
+
+        <p class="cert-presented">This certificate is proudly presented to</p>
+        <h2 class="cert-buyer empty" id="certBuyer">Buyer name</h2>
+        <p class="cert-total">
+          for the purchase of <strong id="certTotal">0 tCO₂e</strong> of carbon credits
+        </p>
+
+        <div class="cert-pills" id="certPills">
+          <div class="cert-pill-empty">NO CREDITS ENTERED</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="details-grid">
+          <div>
+            <p class="detail-label">Transaction ID</p>
+            <p class="detail-value empty mono" id="certTxId">TRN-0000-00000</p>
+          </div>
+          <div>
+            <p class="detail-label">Issue date</p>
+            <p class="detail-value" id="certDate"></p>
+          </div>
+          <div class="project-full hidden" id="certProjectWrap">
+            <p class="detail-label">Project</p>
+            <p class="detail-value" id="certProject"></p>
+          </div>
+        </div>
+
+        <div class="composition hidden" id="composition">
+          <p class="composition-title">Credit composition</p>
+          <div id="compositionRows"></div>
+        </div>
+
+        <div class="description removal" id="description">
+          These carbon credits represent a verified contribution to climate action. This certificate demonstrates a commitment to environmental sustainability.
+        </div>
+
+        <div class="signature">
+          <div class="signature-inner">
+            <div class="signature-line"></div>
+            <p class="signature-title">Authorised signature</p>
+            <p class="signature-sub">TRINITY AGTECH · NATURAL CAPITAL MARKETPLACE</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="preview-actions hidden" id="previewActions">
+        <button class="ncm-btn ncm-btn-outlined" id="backToEditBtn">
+          <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          Edit details
+        </button>
+        <button class="ncm-btn ncm-btn-dark" id="downloadBtn2">
+          <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download PDF
+        </button>
+        <button class="ncm-btn ncm-btn-primary" id="shareBtn2">
+          <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          Share
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// Config
+// ============================================================
+const creditMeta = {
+  removal: {
+    label: 'REMOVAL',
+    labelFull: 'Removal credits',
+    solid: '#65a30d',
+    bg: '#ecfccb',
+    fg: '#3f6212',
+    icon: '<svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19.2 2.96c1.4 3.35 1 6.68 1 8.08 0 5.5-4.78 8.96-9.2 8.96z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/></svg>',
+    iconPill: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19.2 2.96c1.4 3.35 1 6.68 1 8.08 0 5.5-4.78 8.96-9.2 8.96z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/></svg>',
+    description: 'verified contribution to climate action through the removal of greenhouse gases from the atmosphere',
+  },
+  reduction: {
+    label: 'REDUCTION',
+    labelFull: 'Reduction credits',
+    solid: '#1d4ed8',
+    bg: '#dce9ff',
+    fg: '#1d4ed8',
+    icon: '<svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>',
+    iconPill: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>',
+    description: 'verified contribution to climate action through the reduction of greenhouse gas emissions',
+  },
+  retention: {
+    label: 'RETENTION',
+    labelFull: 'Retention credits',
+    solid: '#7e22ce',
+    bg: '#f3e8ff',
+    fg: '#7e22ce',
+    icon: '<svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+    iconPill: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+    description: 'verified contribution to climate action through the retention of carbon stocks in natural systems',
+  },
+};
+
+// ============================================================
+// State
+// ============================================================
+const state = {
+  mode: 'edit',
+  transactionId: '',
+  buyer: '',
+  volumes: { removal: '', reduction: '', retention: '' },
+  projectName: '',
+  issueDate: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
+};
+
+// Set initial date
+document.getElementById('issueDate').value = state.issueDate;
+document.getElementById('certDate').textContent = state.issueDate;
+
+// ============================================================
+// Handlers
+// ============================================================
+document.getElementById('transactionId').addEventListener('input', (e) => {
+  state.transactionId = e.target.value;
+  render();
+});
+document.getElementById('buyer').addEventListener('input', (e) => {
+  state.buyer = e.target.value;
+  render();
+});
+document.getElementById('projectName').addEventListener('input', (e) => {
+  state.projectName = e.target.value;
+  render();
+});
+document.getElementById('issueDate').addEventListener('input', (e) => {
+  state.issueDate = e.target.value;
+  render();
+});
+document.querySelectorAll('.volume-input').forEach((input) => {
+  input.addEventListener('input', (e) => {
+    state.volumes[e.target.dataset.type] = e.target.value;
+    render();
+  });
+});
+
+document.querySelectorAll('.mode-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    state.mode = btn.dataset.mode;
+    document.querySelectorAll('.mode-btn').forEach((b) => b.classList.toggle('active', b.dataset.mode === state.mode));
+    document.getElementById('layout').classList.toggle('preview', state.mode === 'preview');
+    document.getElementById('panel').classList.toggle('hidden', state.mode === 'preview');
+    document.getElementById('previewActions').classList.toggle('hidden', state.mode === 'edit');
+  });
+});
+
+document.getElementById('backToEditBtn').addEventListener('click', () => {
+  document.querySelector('.mode-btn[data-mode="edit"]').click();
+});
+
+document.getElementById('downloadBtn').addEventListener('click', downloadPDF);
+document.getElementById('downloadBtn2').addEventListener('click', downloadPDF);
+document.getElementById('shareBtn').addEventListener('click', sharCert);
+document.getElementById('shareBtn2').addEventListener('click', sharCert);
+
+// ============================================================
+// Render
+// ============================================================
+function activeTypes() {
+  return Object.entries(state.volumes)
+    .filter(([_, v]) => v && Number(v) > 0)
+    .map(([k]) => k);
+}
+
+function totalCredits() {
+  return Object.values(state.volumes).reduce((s, v) => s + (Number(v) || 0), 0);
+}
+
+function render() {
+  // Volume rows highlight
+  document.querySelectorAll('.volume-row').forEach((row) => {
+    const t = row.dataset.type;
+    const v = state.volumes[t];
+    row.classList.toggle('active', v && Number(v) > 0);
+  });
+
+  // Total box
+  const total = totalCredits();
+  const totalBox = document.getElementById('totalBox');
+  if (total > 0) {
+    totalBox.classList.add('show');
+    document.getElementById('totalValue').textContent = total.toLocaleString() + ' tCO₂e';
+  } else {
+    totalBox.classList.remove('show');
+  }
+
+  // Buyer
+  const buyerEl = document.getElementById('certBuyer');
+  if (state.buyer) {
+    buyerEl.textContent = state.buyer;
+    buyerEl.classList.remove('empty');
+  } else {
+    buyerEl.textContent = 'Buyer name';
+    buyerEl.classList.add('empty');
+  }
+
+  // Cert total
+  document.getElementById('certTotal').textContent = total.toLocaleString() + ' tCO₂e';
+
+  // Transaction ID
+  const txEl = document.getElementById('certTxId');
+  if (state.transactionId) {
+    txEl.textContent = state.transactionId;
+    txEl.classList.remove('empty');
+  } else {
+    txEl.textContent = 'TRN-0000-00000';
+    txEl.classList.add('empty');
+  }
+
+  // Issue date
+  document.getElementById('certDate').textContent = state.issueDate;
+
+  // Project
+  const projWrap = document.getElementById('certProjectWrap');
+  if (state.projectName) {
+    projWrap.classList.remove('hidden');
+    document.getElementById('certProject').textContent = state.projectName;
+  } else {
+    projWrap.classList.add('hidden');
+  }
+
+  // Credit type pills
+  const types = activeTypes();
+  const pillsEl = document.getElementById('certPills');
+  if (types.length === 0) {
+    pillsEl.innerHTML = '<div class="cert-pill-empty">NO CREDITS ENTERED</div>';
+  } else {
+    pillsEl.innerHTML = types.map((k) => {
+      const m = creditMeta[k];
+      return `<div class="cert-pill-type ${k}">${m.iconPill}${Number(state.volumes[k]).toLocaleString()} ${m.label}</div>`;
+    }).join('');
+  }
+
+  // Composition table (bundles)
+  const isBundle = types.length > 1;
+  const compEl = document.getElementById('composition');
+  if (isBundle) {
+    compEl.classList.remove('hidden');
+    document.getElementById('compositionRows').innerHTML = types.map((k) => {
+      const m = creditMeta[k];
+      const vol = Number(state.volumes[k]);
+      const pct = ((vol / total) * 100).toFixed(1);
+      return `
+        <div class="composition-row">
+          <div class="composition-left">
+            <div class="composition-icon ${k}">${m.icon}</div>
+            <span class="composition-name">${m.labelFull}</span>
+          </div>
+          <div class="composition-right">
+            <span class="composition-pct">${pct}%</span>
+            <span class="composition-value">${vol.toLocaleString()} tCO₂e</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } else {
+    compEl.classList.add('hidden');
+  }
+
+  // Description
+  const descEl = document.getElementById('description');
+  descEl.className = 'description ' + (isBundle ? 'bundle' : (types[0] || 'removal'));
+  descEl.textContent = renderDescription(types);
+}
+
+function renderDescription(types) {
+  if (types.length === 0) {
+    return 'These carbon credits represent a verified contribution to climate action. This certificate demonstrates a commitment to environmental sustainability.';
+  }
+  const parts = types.map((k) => creditMeta[k].description);
+  let combined;
+  if (parts.length === 1) combined = parts[0];
+  else if (parts.length === 2) combined = parts[0] + ', and ' + parts[1];
+  else combined = parts.slice(0, -1).join(', ') + ', and ' + parts[parts.length - 1];
+  return 'These carbon credits represent a ' + combined + '. This certificate demonstrates a commitment to environmental sustainability.';
+}
+
+// ============================================================
+// PDF
+// ============================================================
+function downloadPDF() {
+  const btns = [document.getElementById('downloadBtn'), document.getElementById('downloadBtn2')];
+  btns.forEach((b) => { b.disabled = true; b.innerHTML = '<span class="spinner"></span>Generating…'; });
+
+  try {
+    if (!window.jspdf) throw new Error('jsPDF failed to load');
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+    const W = 210, H = 297, margin = 15;
+    const hex = (h) => {
+      const v = h.replace('#', '');
+      return [parseInt(v.substr(0, 2), 16), parseInt(v.substr(2, 2), 16), parseInt(v.substr(4, 2), 16)];
+    };
+    const setFill = (h) => pdf.setFillColor(...hex(h));
+    const setDraw = (h) => pdf.setDrawColor(...hex(h));
+    const setText = (h) => pdf.setTextColor(...hex(h));
+
+    const T = {
+      brand: '#4fd4e1', brandHover: '#2fb8c5',
+      textPrimary: '#0c0a09', textSecondary: '#78716c',
+      bgSecondary: '#f5f5f4',
+      borderPrimary: '#d6d3d1', borderSecondary: '#a8a29e', borderTertiary: '#e7e5e4',
+    };
+
+    // Border
+    setDraw(T.brand);
+    pdf.setLineWidth(0.8);
+    pdf.roundedRect(margin, margin, W - 2*margin, H - 2*margin, 4, 4, 'S');
+
+    // Corner marks
+    setDraw(T.brandHover);
+    pdf.setLineWidth(0.5);
+    const cm = 8, co = margin + 3;
+    pdf.line(co, co, co+cm, co); pdf.line(co, co, co, co+cm);
+    pdf.line(W-co, co, W-co-cm, co); pdf.line(W-co, co, W-co, co+cm);
+    pdf.line(co, H-co, co+cm, H-co); pdf.line(co, H-co, co, H-co-cm);
+    pdf.line(W-co, H-co, W-co-cm, H-co); pdf.line(W-co, H-co, W-co, H-co-cm);
+
+    let y = margin + 20;
+
+    // Header pill
+    const pillText = 'CARBON CREDIT CERTIFICATE';
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(10);
+    const pillW = pdf.getTextWidth(pillText) + 14;
+    setFill(T.brand);
+    pdf.roundedRect((W - pillW)/2, y, pillW, 9, 4.5, 4.5, 'F');
+    setText(T.textPrimary);
+    pdf.text(pillText, W/2, y + 6, { align: 'center' });
+    y += 18;
+
+    setText(T.textSecondary);
+    pdf.setFontSize(9);
+    pdf.text('OFFICIAL CERTIFICATE OF CARBON CREDITS', W/2, y, { align: 'center' });
+    y += 14;
+
+    setText(T.textSecondary);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(12);
+    pdf.text('This certificate is proudly presented to', W/2, y, { align: 'center' });
+    y += 12;
+
+    setText(T.textPrimary);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(28);
+    pdf.text(state.buyer || 'Buyer name', W/2, y, { align: 'center' });
+    y += 12;
+
+    setText(T.textSecondary);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(12);
+    pdf.text('for the purchase of ' + totalCredits().toLocaleString() + ' tCO2e of carbon credits', W/2, y, { align: 'center' });
+    y += 12;
+
+    const types = activeTypes();
+    if (types.length > 0) {
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(9);
+      const pills = types.map((k) => ({
+        text: Number(state.volumes[k]).toLocaleString() + ' ' + creditMeta[k].label,
+        color: creditMeta[k].solid,
+      }));
+      const widths = pills.map((p) => pdf.getTextWidth(p.text) + 10);
+      const gap = 3;
+      const totalW = widths.reduce((a, b) => a + b, 0) + gap * (pills.length - 1);
+      let px = (W - totalW) / 2;
+      pills.forEach((p, i) => {
+        setFill(p.color);
+        pdf.roundedRect(px, y, widths[i], 7, 3.5, 3.5, 'F');
+        setText('#ffffff');
+        pdf.text(p.text, px + widths[i] / 2, y + 4.8, { align: 'center' });
+        px += widths[i] + gap;
+      });
+      y += 14;
+    } else {
+      y += 6;
+    }
+
+    setDraw(T.borderTertiary);
+    pdf.setLineWidth(0.2);
+    pdf.line(margin + 10, y, W - margin - 10, y);
+    y += 8;
+
+    const colW = (W - 2*margin - 20) / 2;
+    const leftX = margin + 10;
+    const rightX = leftX + colW + 10;
+
+    setText(T.textSecondary);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(7);
+    pdf.text('TRANSACTION ID', leftX, y);
+    pdf.text('ISSUE DATE', rightX, y);
+    y += 5;
+
+    setText(T.textPrimary);
+    pdf.setFont('courier', 'bold');
+    pdf.setFontSize(13);
+    pdf.text(state.transactionId || 'TRN-0000-00000', leftX, y);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(state.issueDate, rightX, y);
+    y += 10;
+
+    if (state.projectName) {
+      setText(T.textSecondary);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(7);
+      pdf.text('PROJECT', leftX, y);
+      y += 5;
+      setText(T.textPrimary);
+      pdf.setFontSize(13);
+      pdf.text(state.projectName, leftX, y);
+      y += 10;
+    }
+
+    const total = totalCredits();
+    const isBundle = types.length > 1;
+
+    if (isBundle) {
+      y += 4;
+      setFill(T.bgSecondary);
+      const tableH = 10 + types.length * 8;
+      pdf.roundedRect(leftX, y, W - 2*margin - 20, tableH, 3, 3, 'F');
+
+      setText(T.textSecondary);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(7);
+      pdf.text('CREDIT COMPOSITION', leftX + 4, y + 5);
+
+      let ty = y + 11;
+      types.forEach((k) => {
+        const m = creditMeta[k];
+        const vol = Number(state.volumes[k]);
+        const pct = ((vol / total) * 100).toFixed(1);
+
+        setFill(m.solid);
+        pdf.circle(leftX + 6, ty, 1.5, 'F');
+
+        setText(T.textPrimary);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(10);
+        pdf.text(m.labelFull, leftX + 11, ty + 1);
+
+        setText(T.textSecondary);
+        pdf.text(pct + '%', rightX + colW - 40, ty + 1, { align: 'right' });
+
+        pdf.setFont('helvetica', 'bold');
+        setText(T.textPrimary);
+        pdf.text(vol.toLocaleString() + ' tCO2e', rightX + colW - 4, ty + 1, { align: 'right' });
+        ty += 7;
+      });
+      y += tableH + 6;
+    }
+
+    const primaryType = types[0] || 'removal';
+    const primary = creditMeta[primaryType];
+    const descBg = isBundle ? T.bgSecondary : primary.bg;
+    const descFg = isBundle ? T.textPrimary : primary.fg;
+    setFill(descBg);
+    const descLines = pdf.splitTextToSize(renderDescription(types), W - 2*margin - 30);
+    const descH = 8 + descLines.length * 5;
+    pdf.roundedRect(leftX, y, W - 2*margin - 20, descH, 3, 3, 'F');
+    setText(descFg);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(10);
+    pdf.text(descLines, W/2, y + 6, { align: 'center' });
+    y += descH + 14;
+
+    const sigW = 70;
+    setDraw(T.borderSecondary);
+    pdf.setLineWidth(0.3);
+    pdf.line((W - sigW)/2, y, (W + sigW)/2, y);
+    y += 4;
+    setText(T.textPrimary);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(10);
+    pdf.text('Authorised signature', W/2, y, { align: 'center' });
+    y += 4;
+    setText(T.textSecondary);
+    pdf.setFontSize(7);
+    pdf.text('TRINITY AGTECH  .  NATURAL CAPITAL MARKETPLACE', W/2, y, { align: 'center' });
+
+    pdf.save('carbon-certificate-' + (state.transactionId || 'draft') + '.pdf');
+  } catch (err) {
+    console.error(err);
+    alert('Could not generate PDF: ' + err.message);
+  } finally {
+    btns.forEach((b) => {
+      b.disabled = false;
+      b.innerHTML = '<svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download PDF';
+    });
+  }
+}
+
+async function sharCert() {
+  const types = activeTypes();
+  const summary = types.length
+    ? types.map((k) => Number(state.volumes[k]).toLocaleString() + ' tCO₂e ' + k).join(' + ')
+    : '0 tCO₂e';
+  const text = 'Carbon Credit Certificate issued to ' + (state.buyer || '[Buyer]') + ' for ' + summary + '. Transaction ID: ' + (state.transactionId || '[ID]');
+  if (navigator.share) {
+    try { await navigator.share({ title: 'Carbon Credit Certificate', text }); } catch (e) {}
+  } else {
+    navigator.clipboard.writeText(text);
+    alert('Certificate details copied to clipboard');
+  }
+}
+
+render();
+</script>
+</body>
+</html>
