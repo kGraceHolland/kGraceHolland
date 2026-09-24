@@ -15,7 +15,7 @@ const data = await page.evaluate(() => {
   const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   return {
     generated: new Date().toISOString().slice(0, 10),
-    findings: FINDINGS.map((f, i) => ({ id: 'F' + String(i + 1).padStart(2, '0'), title: f.t, sev: f.sev, verified: f.ver, area: f.area, obs: f.obs, imp: f.imp, route: f.link.replace(/^#/, '') })),
+    findings: FINDINGS.map((f, i) => ({ id: 'F' + String(i + 1).padStart(2, '0'), title: f.t, sev: f.sev, verified: f.ver, requested: !!f.req, area: f.area, obs: f.obs, imp: f.imp, route: f.link.replace(/^#/, '') })),
     checks: checks().map(c => ({ id: 'C-' + slug(c.n), title: c.n, count: c.c, info: !!c.info, detail: txt(c.d) })),
   };
 });

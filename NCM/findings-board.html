@@ -60,7 +60,7 @@ h1{margin:2px 0 4px;font-size:26px;line-height:1.15;text-wrap:balance}
 .badges{display:flex;flex-wrap:wrap;gap:4px}
 .b{font-size:11px;padding:1px 7px;border-radius:4px;font-weight:500;white-space:nowrap}
 .b.hi{background:var(--hi-bg);color:var(--hi)}.b.med{background:var(--med-bg);color:var(--med)}.b.lo{background:var(--lo-bg);color:var(--lo)}
-.b.ver{background:var(--ok-bg);color:var(--ok)}.b.inf{background:var(--inf-bg);color:var(--inf)}
+.b.ver{background:var(--ok-bg);color:var(--ok)}.b.req{background:var(--acc-bg);color:var(--acc)}.b.inf{background:var(--inf-bg);color:var(--inf)}
 .b.area{background:transparent;border:1px solid var(--line);color:var(--mut)}
 .b.pass{background:var(--ok-bg);color:var(--ok)}.b.fail{background:var(--hi-bg);color:var(--hi)}.b.info{background:var(--inf-bg);color:var(--inf)}
 details{font-size:12.5px}
@@ -101,6 +101,7 @@ details .imp b{color:var(--acc)}
    "title": "Test data lives in the production registry",
    "sev": "hi",
    "verified": true,
+   "requested": false,
    "area": "Data integrity",
    "obs": "Live registry lists \"Sample Project\" (Fusuma, located \"Al Wahat, Libia\"), farm \"FARM TEST\" and asset IDs like PROJ_001:TEST_001 as Active alongside real credits, with 1,140 tCO2e issued.",
    "imp": "Buyers and auditors can see or transact against test units. Add an environment flag or sandbox tenant, block test assets from Transfer/Retire, and purge or archive.",
@@ -111,6 +112,7 @@ details .imp b{color:var(--acc)}
    "title": "Issue order amount does not match tokens issued",
    "sev": "hi",
    "verified": true,
+   "requested": false,
    "area": "Ledger",
    "obs": "Sample Project: issue operation shows +1,200 but its assets sum to 1,140 (200+300+100+200+240+100). The \"Cultiva Carbono ... Hnos. Andrada-Vanderwilde\" project shows 563 issued, which matches none of the four BALAM issue operations (+441, +1,213, +714, +641).",
    "imp": "Headline order amount appears to be stored separately from asset lines. Derive it from lines, or add a reconciliation check that blocks mismatches. Mapping of issue operations to projects also needs to be visible in the operations list.",
@@ -121,6 +123,7 @@ details .imp b{color:var(--acc)}
    "title": "Certification not linked to issuance operations",
    "sev": "hi",
    "verified": true,
+   "requested": false,
    "area": "Evidence",
    "obs": "Add tokens requires at least one PDF, yet all 2026 issue operations show \"—\" in Attachments and Sample Project has \"No documents yet\".",
    "imp": "The evidence chain from verification statement to units breaks at the record level. Store the certificate on the issue operation and surface it in Documents.",
@@ -131,6 +134,7 @@ details .imp b{color:var(--acc)}
    "title": "Duplicate buyer entities",
    "sev": "med",
    "verified": true,
+   "requested": false,
    "area": "Master data",
    "obs": "\"TARAJE NUEVO S COOP AND\" and \"TARAJE NUEVO S.COOP AND.\" exist as separate businesses. The Create Operation target dropdown lists \"Colegio Oficial de Ópticos-Optometristas de Andalucía\" twice.",
    "imp": "Retirement and holdings reports can split one beneficiary across two wallets. Add a tax ID (CIF/VAT) as unique key, fuzzy duplicate warning on create, and a merge tool.",
@@ -141,6 +145,7 @@ details .imp b{color:var(--acc)}
    "title": "External reference has no consistent format",
    "sev": "lo",
    "verified": true,
+   "requested": false,
    "area": "Master data",
    "obs": "Values mix codes (BALAM-0001), migration slugs (mig-picus), full legal names (Productos del campo ANRO S.L.) and upper-snake names (TARAJE_NUEVO_S_COOP_AND).",
    "imp": "Define one pattern per entity and validate on input; keep migration IDs in a separate legacy field.",
@@ -151,6 +156,7 @@ details .imp b{color:var(--acc)}
    "title": "Project attributes contradict the description",
    "sev": "med",
    "verified": true,
+   "requested": false,
    "area": "Project data",
    "obs": "Hnos. Andrada-Vanderwilde shows Total area 0 hectares and Farmers 1 \"cooperatives\", while the description names four growers (CC0010, CC0015, CC0017, CC0019).",
    "imp": "Area and farmer counts are public claims. Derive them from registered farms/fields, and fix the unit label (\"cooperatives\" for a farmer count).",
@@ -161,6 +167,7 @@ details .imp b{color:var(--acc)}
    "title": "Sign convention differs by operation type",
    "sev": "lo",
    "verified": true,
+   "requested": false,
    "area": "Operations UX",
    "obs": "Issue shows +641, Retire shows -2, Transfer shows 13 in red with no sign. Asset type column stacks several chips per row.",
    "imp": "Show signed flow relative to the viewed wallet, or split into \"Quantity\" plus a direction icon.",
@@ -171,6 +178,7 @@ details .imp b{color:var(--acc)}
    "title": "Pending workflow is unused",
    "sev": "med",
    "verified": true,
+   "requested": false,
    "area": "Controls",
    "obs": "All 20 operations are Done with Issued At equal to Completed At to the second. Pending (0), Cancelled (0).",
    "imp": "There is no maker-checker step before units move. Enforce Pending plus a second approver for transfers and retirements above a threshold.",
@@ -181,6 +189,7 @@ details .imp b{color:var(--acc)}
    "title": "Signed-in user shows as \"User\" after navigation",
    "sev": "lo",
    "verified": true,
+   "requested": false,
    "area": "UI bug",
    "obs": "Sidebar footer showed \"Kiera Holland\" on Users, then \"User\" with avatar \"U\" on Businesses, Farms, Projects and Operations.",
    "imp": "Session profile is not loaded on client-side route changes.",
@@ -191,6 +200,7 @@ details .imp b{color:var(--acc)}
    "title": "Tables overflow at laptop width",
    "sev": "lo",
    "verified": true,
+   "requested": false,
    "area": "UI bug",
    "obs": "At about 1,250 px the Projects table clips the action column and the \"Create Project\" button; Operations clips Completed At and Attachments.",
    "imp": "Truncate long names with tooltips, hide secondary date columns below a breakpoint, or make the actions column sticky.",
@@ -201,6 +211,7 @@ details .imp b{color:var(--acc)}
    "title": "No search or filters on any list",
    "sev": "med",
    "verified": true,
+   "requested": false,
    "area": "Operations UX",
    "obs": "Lists only offer pagination; Operations only has status tabs. No filter by project, business, type, vintage or date.",
    "imp": "Needed once volume grows past a few pages. Replica adds a search box on each list to test the pattern.",
@@ -211,6 +222,7 @@ details .imp b{color:var(--acc)}
    "title": "Users list omits business association",
    "sev": "lo",
    "verified": true,
+   "requested": false,
    "area": "Access",
    "obs": "Columns are Name, Email, Role, Created At. Names are truncated (e.g. \"JEF PROPERTIES S\").",
    "imp": "Admins cannot see which wallet a user can act for. Add Business column and last sign-in.",
@@ -221,6 +233,7 @@ details .imp b{color:var(--acc)}
    "title": "Vintage rule blocks back-filling missed years",
    "sev": "med",
    "verified": false,
+   "requested": false,
    "area": "Issuance",
    "obs": "Add tokens allows only vintages later than the max already issued (\"Allowed vintage years: 2022–2026 (max already issued: 2021)\").",
    "imp": "Inferred: a late-verified earlier vintage cannot be added without a workaround. Validate against a per-project monitoring schedule instead.",
@@ -231,9 +244,32 @@ details .imp b{color:var(--acc)}
    "title": "Wallet shows only non-zero types; retired totals absent",
    "sev": "lo",
    "verified": false,
+   "requested": false,
    "area": "Reporting",
    "obs": "BALAM wallet shows RMV 3,478 only, with no view of issued, transferred or retired units per project.",
    "imp": "Inferred: for a claims platform, retired-on-behalf-of totals per beneficiary are the key output. Replica wallet adds a retired total.",
+   "route": "/businesses"
+  },
+  {
+   "id": "F15",
+   "title": "Buyer details have no address",
+   "sev": "med",
+   "verified": true,
+   "requested": true,
+   "area": "Master data",
+   "obs": "Create Business asks only for Name, External Reference and Type. The Details tab shows name, reference and default organization; there is no registered address or tax ID anywhere on a business.",
+   "imp": "Retirement certificates, invoices and beneficiary claims need the legal name and registered address. Add registered address (street, city, postcode, country) and tax ID at creation, show them on Details, and print them on the public retirement certificate.",
+   "route": "/businesses"
+  },
+  {
+   "id": "F16",
+   "title": "No guided flow from new business to its first user",
+   "sev": "med",
+   "verified": true,
+   "requested": true,
+   "area": "Onboarding",
+   "obs": "Creating a business and adding its users happen on separate screens with no link between them. The Users list has no business column (F12) and the replica check finds a Business User with no business.",
+   "imp": "Make it one flow: 1 Create business, 2 Address and tax ID, 3 Invite users by email with a role, 4 Review. Show invite status (sent, accepted) on the business, and warn before a business with no active user is used as a transfer target.",
    "route": "/businesses"
   }
  ],
@@ -341,7 +377,7 @@ function cardHtml(c){
  const moved=STATE[c.id]?.at?`<span class="when">Moved ${fmtDate(STATE[c.id].at)}</span>`:'<span class="when"></span>';
  let body;
  if(c.kind==='finding'){
-  body=`<div class="badges"><span class="b ${c.sev}">${SEV[c.sev]}</span><span class="b ${c.verified?'ver':'inf'}">${c.verified?'Verified':'Inferred'}</span><span class="b area">${esc(c.area)}</span></div>
+  body=`<div class="badges"><span class="b ${c.sev}">${SEV[c.sev]}</span>${c.requested?'<span class="b req">Requested</span>':`<span class="b ${c.verified?'ver':'inf'}">${c.verified?'Verified':'Inferred'}</span>`}<span class="b area">${esc(c.area)}</span></div>
   <details><summary>Observation and implication</summary><p>${esc(c.obs)}</p><p class="imp"><b>Implication:</b> ${esc(c.imp)}</p><p class="route mono">Replica: ${esc(c.route)}</p></details>`;
  }else{
   const res=c.info?`<span class="b info">${esc(c.count)} in use</span>`:c.count?`<span class="b fail">${c.count} failing</span>`:'<span class="b pass">Pass</span>';
