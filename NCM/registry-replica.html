@@ -1,0 +1,885 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Registry Replica</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--side:#e5edf0;--tx:#0f172a;--mut:#64748b;--bd:#e5e7eb;--hd:#f8fafc;--pri:#8fdca8;--pritx:#0b3d1f;--red:#dc2626;--grn:#16a34a;--warn:#b45309}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,-apple-system,sans-serif;color:var(--tx);background:#fff;font-size:14px;line-height:1.4}
+a{color:inherit}
+.app{display:flex;min-height:100vh}
+aside{width:190px;background:var(--side);position:sticky;top:0;height:100vh;display:flex;flex-direction:column;flex-shrink:0;transition:width .15s}
+aside.col{width:62px}aside.col .lbl{display:none}
+.logo{padding:16px 16px 14px;display:flex;align-items:center;gap:8px;text-decoration:none}
+.logo .wm{font-size:20px;font-weight:600;color:#0f3b57;letter-spacing:-.02em;line-height:1}
+.logo .wm small{display:block;font-size:6.5px;letter-spacing:.22em;color:#2f8fb0;font-weight:600;margin-top:3px}
+.nav{margin-top:18px}
+.nav a{display:flex;gap:10px;align-items:center;padding:9px 18px;color:#52606d;text-decoration:none;font-weight:500;font-size:13.5px}
+.nav a.on{color:#0f172a;font-weight:600}
+.nav a:hover{color:#0f172a}
+.nav .sec{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:#8a9aa8;padding:18px 18px 4px}
+.sidefoot{margin-top:auto;padding:12px}
+.langrow{display:flex;justify-content:space-between;align-items:center;background:#f4f8f9;border-radius:8px;padding:6px 10px;margin-bottom:10px}
+.langrow select{border:0;background:none;font:500 12px Inter,system-ui,sans-serif}
+.me{display:flex;gap:8px;align-items:center}
+.av{width:28px;height:28px;border-radius:6px;background:#bfe8c9;color:#14532d;font-weight:600;font-size:11px;display:grid;place-items:center;flex-shrink:0}
+.me b{font-size:12.5px;display:block}.me span{font-size:11px;color:var(--mut);display:block;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mainwrap{flex:1;min-width:0}
+.banner{background:#fff7ed;color:#9a3412;font-size:12px;padding:6px 24px;border-bottom:1px solid #fed7aa;display:flex;gap:12px;justify-content:space-between;flex-wrap:wrap}
+.banner button{border:0;background:none;color:#9a3412;font:600 12px Inter,system-ui,sans-serif;cursor:pointer;text-decoration:underline;padding:0 0 0 10px}
+main{padding:20px 24px 60px;max-width:1240px}
+.crumb{font-weight:600;font-size:15px;margin:6px 0 30px;display:flex;align-items:center;gap:8px;color:var(--tx)}
+.crumb a{text-decoration:none;color:var(--mut);font-weight:500}
+h1{font-size:22px;margin:0 0 4px;letter-spacing:-.015em}
+.sub{color:var(--mut);margin:0 0 16px}
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--bd);background:#fff;border-radius:6px;padding:7px 12px;font:500 13px Inter,system-ui,sans-serif;cursor:pointer;color:var(--tx);text-decoration:none;white-space:nowrap}
+.btn:hover{background:#f8fafc}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:var(--pritx)}
+.btn.pri:hover{background:#7bd197}
+.btn.pri:disabled{opacity:.5;cursor:not-allowed}
+.btn.dan{color:var(--red);border-color:#fecaca}
+.btn.ghost{border-color:transparent;background:none}
+.tw{border:1px solid var(--bd);border-radius:8px;overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{background:var(--hd);text-align:left;font-weight:600;font-size:12.5px;padding:10px;border-bottom:1px solid var(--bd);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid var(--bd);vertical-align:middle;font-size:13px}
+td+td,th+th{border-left:1px solid var(--bd)}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:#fbfcfd}
+td.num,th.num{text-align:right}
+td.act{white-space:nowrap;text-align:right;width:1%}
+.small{font-size:11.5px;color:var(--mut)}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px}
+.trunc{max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.badge{display:inline-block;font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:4px;white-space:nowrap}
+.b-dev{background:#fdebd3;color:#b45309}.b-buy{background:#dcfce7;color:#15803d}
+.b-red{background:#e0f2fe;color:#0369a1}.b-rmv{background:#f3e8ff;color:#7e22ce}.b-ret{background:#dcfce7;color:#15803d}
+.b-done,.b-active{background:#dcfce7;color:#15803d}.b-pending{background:#fef9c3;color:#a16207}.b-cancelled{background:#fee2e2;color:#b91c1c}.b-draft{background:#e2e8f0;color:#475569}
+.b-ver{background:#dcfce7;color:#166534}.b-inf{background:#e0e7ff;color:#3730a3}
+.b-hi{background:#fee2e2;color:#b91c1c}.b-med{background:#fef3c7;color:#92400e}.b-lo{background:#f1f5f9;color:#475569}
+.atype{display:inline-flex;gap:4px;align-items:center;border:1px solid var(--bd);border-radius:5px;padding:2px 7px;font-size:11.5px;margin:1px 0;white-space:nowrap}
+.atype svg{width:12px;height:12px}
+.stack{display:flex;flex-direction:column;gap:2px;align-items:flex-start}
+.wrapb{display:flex;flex-wrap:wrap;gap:4px;max-width:120px}
+.icb{border:0;background:none;padding:5px;border-radius:5px;cursor:pointer;color:#475569;display:inline-grid;place-items:center;vertical-align:middle}
+.icb:hover{background:#eef2f5;color:#0f172a}
+.icb.dan:hover{color:var(--red)}
+.icb svg{width:15px;height:15px}
+.pager{display:flex;justify-content:space-between;align-items:center;margin-top:12px;color:var(--mut);font-size:13px;flex-wrap:wrap;gap:10px}
+.pager .pg{display:flex;gap:6px;align-items:center}
+.pager select{width:auto;border:1px solid var(--bd);border-radius:6px;padding:4px 6px;font:13px Inter,system-ui,sans-serif}
+.pager .icb{border:1px solid var(--bd)}
+.pager .icb:disabled{opacity:.35;cursor:default}
+.tabs{display:inline-flex;background:#f1f5f9;border-radius:8px;padding:3px;gap:2px;margin-bottom:14px;flex-wrap:wrap}
+.tabs button{border:0;background:none;padding:6px 11px;border-radius:6px;font:500 13px Inter,system-ui,sans-serif;cursor:pointer;color:#334155}
+.tabs button.on{background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.08);color:#0f172a}
+.card{border:1px solid var(--bd);border-radius:10px;padding:18px;margin-bottom:16px;background:#fff}
+.card h2{font-size:17px;margin:0 0 2px;letter-spacing:-.01em}
+.card .sub{font-size:12.5px;margin-bottom:14px}
+.kv{display:grid;gap:14px}
+.kv label{display:flex;gap:6px;align-items:center;font-weight:600;font-size:12.5px;margin-bottom:3px}
+.hero{background:linear-gradient(115deg,#1d4a73 0%,#2c7fa6 50%,#62d0ea 100%);color:#fff;margin:-20px -24px 20px;padding:22px 24px 26px}
+.hero .top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.hero .acts{display:flex;gap:6px;flex-wrap:wrap}
+.hero .acts .btn{padding:6px 10px;font-size:12.5px}
+.pill{display:inline-flex;gap:6px;align-items:center;background:#5cc27f;color:#fff;border-radius:6px;padding:5px 10px;font-weight:600;font-size:12px}
+.pill.draft{background:#94a3b8}
+.hero .dev{font-size:12px;font-weight:600;letter-spacing:.08em;color:#b6f0c8;margin:22px 0 6px;text-transform:uppercase}
+.hero h1{font-size:34px;color:#fff;margin:0 0 12px;font-weight:600}
+.hero .meta{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;opacity:.95}
+.hero .tabs{background:rgba(255,255,255,.18);margin:30px 0 0}
+.hero .tabs button{color:#fff}.hero .tabs button.on{color:#0f172a;background:#fff}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.stat{border:1px solid var(--bd);border-radius:10px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.stat .ic{width:28px;height:28px;border-radius:6px;display:grid;place-items:center;margin-bottom:10px}
+.stat .ic svg{width:15px;height:15px}
+.stat .l{font-size:12px;color:#334155}.stat .v{font-size:20px;font-weight:700}.stat .u{font-size:11.5px;color:var(--mut);margin-left:3px}
+.grid2{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px;align-items:start}
+.side-panel{background:#e6f3fb;border-radius:10px;padding:16px}
+.side-panel h4{font-size:10.5px;letter-spacing:.08em;color:#2f7fa6;margin:14px 0 6px}
+.side-panel h4:first-child{margin-top:0}
+.sdg{display:inline-grid;place-items:center;width:40px;height:40px;border-radius:4px;color:#fff;font-weight:700;font-size:13px;margin:0 4px 4px 0}
+.practice{display:flex;gap:10px;align-items:center;background:#f8fafc;border-radius:8px;padding:12px}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.imgph{height:220px;border-radius:10px;background:linear-gradient(135deg,#dbeafe,#e0f2fe 40%,#dcfce7);display:grid;place-items:center;color:#2c7fa6;font-weight:600;letter-spacing:.2em;margin-bottom:16px}
+.map{height:240px;border-radius:8px;background:#d9e7ec;position:relative;overflow:hidden}
+.field{margin-bottom:14px}
+.field>label{display:block;font-weight:600;font-size:12.5px;margin-bottom:4px}
+.field .hint{font-size:11.5px;color:var(--mut);margin:-2px 0 5px}
+input[type=text],input[type=number],input[type=email],input[type=date],select,textarea{width:100%;border:1px solid var(--bd);border-radius:6px;padding:8px 10px;font:13px Inter,system-ui,sans-serif;color:var(--tx);background:#fff}
+textarea{min-height:80px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid #bbf7d0;border-color:#86efac}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.opt{border:1.5px solid var(--bd);border-radius:8px;padding:14px;text-align:center;cursor:pointer;background:#fff}
+.opt.on{border-color:#86d99f;background:#f0fdf4}
+.opt b{display:block;margin-top:6px}.opt span{font-size:11.5px;color:var(--mut)}
+.alloc{border:1px solid var(--bd);border-radius:8px;padding:12px;margin-bottom:10px}
+.alloc .h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.drop{border:1.5px dashed #cbd5e1;border-radius:8px;padding:22px;text-align:center;color:var(--mut)}
+.err{color:var(--red);font-size:12px;margin-top:4px}
+.empty{text-align:center;padding:40px;color:var(--mut)}
+.search{max-width:280px;margin-bottom:12px}
+#modal .ov{position:fixed;inset:0;background:rgba(15,23,42,.45);display:grid;place-items:center;z-index:50;padding:16px}
+#modal .dlg{background:#fff;border-radius:10px;width:min(560px,100%);max-height:90vh;overflow:auto;padding:20px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+#modal .dlg.wide{width:min(820px,100%)}
+#modal h3{margin:0 0 4px;font-size:16px}
+.dlgfoot{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:60}
+#toast div{background:#0f172a;color:#fff;padding:9px 14px;border-radius:8px;font-size:13px;margin-top:6px;box-shadow:0 6px 20px rgba(0,0,0,.2)}
+.find{border:1px solid var(--bd);border-radius:10px;padding:14px 16px;margin-bottom:10px}
+.find .t{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.find .t b{font-size:14px}
+.find p{margin:4px 0;font-size:13px;color:#334155}
+.find .imp{color:#0f5132}
+.chk td:first-child{font-weight:500}
+.ok{color:var(--grn);font-weight:600}.bad{color:var(--red);font-weight:600}
+.pos{color:var(--grn);font-weight:600}.negr{color:var(--red);font-weight:600}
+.mgrid th,.mgrid td{text-align:center}
+.mgrid td.cell{cursor:pointer;color:var(--mut)}
+.mgrid td.cell:hover{background:#f0fdf4}
+.mgrid tr.farm td{background:#f8fafc;font-weight:600;text-align:left}
+@media (max-width:900px){.stats{grid-template-columns:1fr 1fr}.grid2{grid-template-columns:1fr}}
+@media (max-width:760px){aside{width:62px}aside .lbl{display:none}main{padding:16px 16px 60px}.hero{margin:-16px -16px 16px;padding:18px 16px}.row2,.row3,.pgrid{grid-template-columns:1fr}.hero h1{font-size:26px}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside id="side"></aside>
+<div class="mainwrap">
+<div class="banner"><span>Replica with synthetic test data. Not connected to the live registry. Changes live in this tab only.</span><span><button data-a="export">Export JSON</button><button data-a="import">Import JSON</button><button data-a="reset">Reset test data</button></span></div>
+<main id="main"></main>
+</div>
+</div>
+<div id="modal"></div><div id="toast"></div>
+<input type="file" id="importFile" accept="application/json" hidden>
+<script>
+/* ================= utils ================= */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+let R=mulberry32(1);
+const ri=(a,b)=>Math.floor(R()*(b-a+1))+a;
+const pick=a=>a[Math.floor(R()*a.length)];
+const AL='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+const nid=(p,rand=R)=>p+'_'+Array.from({length:21},()=>AL[Math.floor(rand()*62)]).join('');
+const uid=p=>nid(p,Math.random);
+const iso=s=>new Date(s).toISOString();
+const addD=(s,d,h=0)=>new Date(new Date(s).getTime()+d*864e5+h*36e5).toISOString();
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const p2=n=>String(n).padStart(2,'0');
+const fD=s=>{const d=new Date(s);return `${p2(d.getDate())}/${p2(d.getMonth()+1)}/${d.getFullYear()}`};
+const fDT=(s,sec=true)=>{const d=new Date(s);return `${fD(s)}${sec?',':''} ${p2(d.getHours())}:${p2(d.getMinutes())}${sec?':'+p2(d.getSeconds()):''}`};
+const fLong=s=>new Date(s).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+const fN=n=>Number(n||0).toLocaleString('en-US');
+const sum=a=>a.reduce((x,y)=>x+y,0);
+const byId=(arr,id)=>arr.find(x=>x.id===id);
+
+/* ================= icons ================= */
+const sv=p=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const I={
+ biz:sv('<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 7h1M14 7h1M9 11h1M14 11h1M9 15h1M14 15h1M10 21v-3h4v3"/>'),
+ farm:sv('<path d="M7 20h10M12 20v-8M12 12c0-4 3-6 7-6 0 4-3 6-7 6zM12 12C12 9 10 7 5 7c0 3 2 5 7 5"/>'),
+ proj:sv('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M8 16v-3M12 16v-5M16 16v-2"/>'),
+ ops:sv('<path d="M7 7h13l-3-3M17 17H4l3 3"/>'),
+ users:sv('<circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 4.5a3.5 3.5 0 0 1 0 7M21 20c0-2.6-1.6-4.8-4-5.6"/>'),
+ flag:sv('<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>'),
+ eye:sv('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'),
+ copy:sv('<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/>'),
+ trash:sv('<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>'),
+ edit:sv('<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>'),
+ plus:sv('<path d="M12 5v14M5 12h14"/>'),
+ coin:sv('<circle cx="9" cy="9" r="6"/><path d="M15.1 9.4a6 6 0 1 1-5.7 5.7"/>'),
+ share:sv('<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>'),
+ back:sv('<path d="M19 12H5M12 19l-7-7 7-7"/>'),
+ up:sv('<path d="M12 19V5M6 11l6-6 6 6"/>'),
+ down:sv('<path d="M3 7l6 6 4-4 8 8M21 11v6h-6"/>'),
+ leaf:sv('<path d="M11 20A7 7 0 0 1 4 13c0-6 7-9 16-9 0 9-3 16-9 16zM4 20c4-4 7-6 11-8"/>'),
+ pin:sv('<path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>'),
+ cal:sv('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/>'),
+ trend:sv('<path d="M3 17l6-6 4 4 8-8M15 7h6v6"/>'),
+ target:sv('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>'),
+ area:sv('<path d="M7 20h10M12 20v-9M12 11c-3 0-5-2-5-5 3 0 5 2 5 5zM12 11c3 0 5-2 5-5-3 0-5 2-5 5z"/>'),
+ chevL:sv('<path d="M15 18l-6-6 6-6"/>'),chevR:sv('<path d="M9 18l6-6-6-6"/>'),
+ chevLL:sv('<path d="M11 18l-6-6 6-6M19 18l-6-6 6-6"/>'),chevRR:sv('<path d="M13 18l6-6-6-6M5 18l6-6-6-6"/>'),
+ upload:sv('<path d="M12 15V3M7 8l5-5 5 5M4 17v3h16v-3"/>'),
+ dots:sv('<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>'),
+ swap:sv('<path d="M7 7h13l-3-3M17 17H4l3 3"/>'),
+ fire:sv('<path d="M12 21c-4 0-6-3-6-6 0-4 4-6 4-10 3 2 4 4 4 6 1-1 2-2 2-4 2 2 4 5 4 8 0 3-3 6-8 6z"/>'),
+ doc:sv('<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/>'),
+ hash:sv('<path d="M4 9h16M4 15h16M10 3L8 21M16 3l-2 18"/>'),
+ tag:sv('<path d="M20 12l-8 8-9-9V3h8z"/><circle cx="7.5" cy="7.5" r="1.3"/>'),
+ panel:sv('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/>'),
+};
+const LOGO=`<svg width="26" height="26" viewBox="0 0 32 32"><path d="M2 5h28l-9 6H11z" fill="#2f8fb0"/><path d="M11 11h10l-4 17h-3z" fill="#1d4a73"/><path d="M21 11l5-3-6 12z" fill="#62d0ea"/></svg>`;
+
+/* ================= reference data ================= */
+const TYPES={red:{l:'Reduction',s:'RED',c:'b-red',ic:I.down},rmv:{l:'Removal',s:'RMV',c:'b-rmv',ic:I.up},ret:{l:'Retention',s:'RET',c:'b-ret',ic:I.leaf}};
+const TORDER=['red','rmv','ret'];
+const SRC={bio:'Biogenic',tec:'Technological'};
+const PRACTICES=['Optimized fertilizer timing','Nitrification inhibitors','Mulching & crop residue cover','Intercropping','Renewable electricity use','Cover cropping','Reduced tillage','Organic amendments','Hedgerow planting','Precision irrigation'];
+const COBEN=['Biodiversity improvement','Soil health','Water retention','Rural employment'];
+const SDGS=[[1,'No Poverty','#e5243b'],[2,'Zero Hunger','#dda63a'],[3,'Good Health','#4c9f38'],[4,'Education','#c5192d'],[5,'Gender Equality','#ff3a21'],[6,'Clean Water','#26bde2'],[7,'Clean Energy','#fcc30b'],[8,'Economic Growth','#a21942'],[9,'Innovation','#fd6925'],[10,'Reduced Inequality','#dd1367'],[11,'Sustainable Cities','#fd9d24'],[12,'Responsible Consumption','#bf8b2e'],[13,'Climate Action','#3f7e44'],[14,'Life Below Water','#0a97d9'],[15,'Life on Land','#56c02b'],[16,'Peace & Justice','#00689d'],[17,'Partnerships','#19486a']];
+const NOW='2026-09-24T10:00:00';
+
+/* ================= seed ================= */
+function seed(){
+ R=mulberry32(20260924);
+ const D={businesses:[],farms:[],projects:[],assets:[],operations:[],users:[],currentUserId:null};
+ const mkBiz=(name,ext,type,c,u)=>{const b={id:nid('biz'),name,extRef:ext,type,createdAt:iso(c),updatedAt:iso(u||c),orgs:[{id:nid('org'),name:name+" Default's Organization",isDefault:true,createdAt:iso(c)}]};D.businesses.push(b);return b};
+ const devs=[
+  mkBiz('Agroverde Andalucía S.L.','AGV-0001','Project Developer','2024-02-12T09:14:22'),
+  mkBiz('Olivares de Sierra Mágina S.L.','OSM-0001','Project Developer','2025-03-04T11:02:10'),
+  mkBiz('Dehesa Viva S. Coop. And.','mig-dehesaviva','Project Developer','2023-11-20T08:40:00','2026-04-22T10:00:00'),
+  mkBiz('Nordic Soil Carbon AB','NSC-001','Project Developer','2025-09-18T13:30:45'),
+  mkBiz('Demo Developer','DEMO-123','Project Developer','2026-02-09T17:50:03'),
+ ];
+ devs[1].orgs.push({id:nid('org'),name:'Sierra Mágina Almendro',isDefault:false,createdAt:iso('2025-06-01T10:00')});
+ const buyers=[
+  ['Helios Capital GmbH','mig-helios','2023-12-20T10:20:00','2026-04-22T10:00:00'],
+  ['Lumen Ventures LLP','mig-lumen','2023-12-20T10:21:00','2026-04-22T10:00:00'],
+  ['Martin Albrecht','mig-albrecht','2023-12-20T10:22:00','2026-04-22T10:00:00'],
+  ['Colegio Profesional de Agrónomos de Andalucía','mig-colegio','2024-04-30T17:40:00','2026-04-22T10:00:00'],
+  ['OLIVAR DEL GUADALQUIVIR S.COOP AND.','mig-olivarguad','2024-09-06T15:50:00','2026-04-22T10:00:00'],
+  ['Finledger Ltd','mig-finledger','2024-09-06T15:52:00','2026-04-22T10:00:00'],
+  ['OLIVAR DEL GUADALQUIVIR S COOP AND','OLIVAR_DEL_GUADALQUIVIR_S_COOP_AND','2026-02-10T20:10:00'],
+  ['Productos Hortícolas Vega S.L.','Productos Hortícolas Vega S.L.','2026-02-10T20:12:00'],
+  ['Kiwi Norte Bio S.L.','BUY-0009','2026-03-02T09:00:00'],
+  ['Brauhaus Nord GmbH','BUY-0010','2026-03-15T14:00:00'],
+  ['Green Freight BV','BUY-0011','2026-04-02T10:30:00'],
+  ['Atlas Mutual Insurance SE','BUY-0012','2026-04-20T12:10:00'],
+  ['Molino Blanco S.L.','BUY-0013','2026-05-11T08:45:00'],
+  ['Northwind Retail plc','BUY-0014','2026-06-01T16:20:00'],
+  ['Viajes Clima S.A.','BUY-0015','2026-06-19T11:11:00'],
+  ['Hansa Logistik GmbH','BUY-0016','2026-07-07T09:30:00'],
+  ['Studio Tierra Arquitectos','BUY-0017','2026-07-28T15:05:00'],
+  ['Rhein Pharma AG','BUY-0018','2026-08-12T10:00:00'],
+  ['Café Montaña S.L.','BUY-0019','2026-09-01T13:40:00'],
+ ].map(b=>mkBiz(b[0],b[1],'Buyer',b[2],b[3]));
+
+ const mkFarm=(dev,name,ext,c,fields,u)=>{const f={id:nid('farm'),name,extRef:ext,businessId:dev.id,createdAt:iso(c),updatedAt:iso(u||c),fields:fields.map((a,i)=>({code:typeof a==='string'?a:`FIELD-${p2(i+1).padStart(3,'0')}`,areaHa:typeof a==='string'?100:a}))};D.farms.push(f);return f};
+ const F=[
+  mkFarm(devs[0],'Cortijo El Almendral','AGV-FARM-001','2024-02-12T09:30',[42,65,38]),
+  mkFarm(devs[0],'Finca Los Olivillos','AGV-FARM-002','2024-03-01T10:00',[120,54]),
+  mkFarm(devs[0],'Hacienda Santa Clara','AGV-FARM-003','2025-01-15T12:00',[33,47,29,61]),
+  mkFarm(devs[1],'Olivar de Bedmar','OSM-FARM-001','2025-03-04T11:30',[88,72,40]),
+  mkFarm(devs[1],'Finca La Mata','OSM-FARM-002','2025-03-10T09:00',[150,96]),
+  mkFarm(devs[2],'El Encinar','mig-farm-encinar','2023-11-20T08:45',[210,180,95],'2026-04-22T10:00'),
+  mkFarm(devs[2],'Dehesa Viva Default Farm','DVV-FARM-001','2026-02-10T19:41',[]),
+  mkFarm(devs[3],'Västergård','NSC-F-01','2025-09-18T14:00',[64,58]),
+  mkFarm(devs[3],'Norrbacka','NSC-F-02','2025-09-20T08:00',[77,49]),
+  mkFarm(devs[4],'FARM TEST','FARM-123','2026-02-09T17:55',['TEST_001']),
+ ];
+ const P=[
+  {n:'Carbono Olivar 2024 - Cortijo El Almendral',d:0,f:[0],loc:'Úbeda, Jaén, España',ll:[38.01,-3.37],v:[2024],t:['red','rmv'],pr:[2,3,6],sdg:[2,13,15],c:'2025-02-20T10:10',ext:'AGV-P-2024-01'},
+  {n:'Carbono Olivar 2024 - Los Olivillos',d:0,f:[1],loc:'Montilla, Córdoba, España',ll:[37.59,-4.64],v:[2024],t:['red','rmv'],pr:[0,1,2],sdg:[2,13],c:'2025-02-20T10:30',ext:'AGV-P-2024-02',declaredDelta:60},
+  {n:'Carbono Olivar 2025 - Santa Clara',d:0,f:[2],loc:'Sevilla, Andalucía, España',ll:[37.39,-5.98],v:[2025],t:['rmv','ret'],pr:[2,3,4],sdg:[13,15],c:'2026-02-10T19:50',ext:'AGV-P-2025-01',zeroArea:true,farmers:1,multiFarmerDesc:true},
+  {n:'Sierra Mágina Almendro 2025',d:1,f:[3],loc:'Bedmar, Jaén, España',ll:[37.82,-3.41],v:[2025],t:['rmv'],pr:[5,6,8],sdg:[13,15],c:'2026-03-02T09:30',ext:'OSM-P-01',org:1},
+  {n:'Sierra Mágina Olivar Tradicional',d:1,f:[4],loc:'Jódar, Jaén, España',ll:[37.84,-3.35],v:[2023,2024],t:['red','rmv'],pr:[0,2,7],sdg:[2,8,13],c:'2025-06-10T12:00',ext:'OSM-P-02',noCert:true},
+  {n:'El Encinar Legacy',d:2,f:[5],loc:'Cáceres, Extremadura, España',ll:[39.47,-6.37],v:[2022],t:['rmv'],pr:[5,8],sdg:[13,15],c:'2023-12-20T10:38',ext:'mig-proj-encinar',legacy:true},
+  {n:'El Encinar Silvopastoral (year 2025)',d:2,f:[5],loc:'Cáceres, Extremadura, España',ll:[39.47,-6.37],v:[2025],t:['rmv','ret'],pr:[5,7,8],sdg:[13,15],c:'2026-04-22T10:05',ext:'DVV-P-2025',noCert:true},
+  {n:'Uppland Regenerative Barley 2025',d:3,f:[7],loc:'Uppsala, Sverige',ll:[59.86,17.64],v:[2025],t:['red','rmv'],pr:[5,6,0],sdg:[2,13],c:'2026-05-14T08:20',ext:'NSC-P-01'},
+  {n:'Skåne Cover Crops 2024',d:3,f:[8],loc:'Lund, Skåne, Sverige',ll:[55.70,13.19],v:[2024],t:['rmv'],pr:[5,6],sdg:[13,15],c:'2026-01-12T15:10',ext:'NSC-P-02'},
+  {n:'Sample Project',d:4,f:[9],loc:'Al Wahat, Libia',ll:[29.0,21.5],v:[2020,2021],t:['red','rmv','ret'],pr:[0,1],sdg:[1,2],c:'2026-02-09T18:30',ext:'PROJ_001',test:true,bothSrc:true,area:100,declaredDelta:60},
+  {n:'Carbono Olivar 2026 - Cortijo El Almendral',d:0,f:[0],loc:'Úbeda, Jaén, España',ll:[38.01,-3.37],v:[],t:[],pr:[2,3],sdg:[13],c:'2026-09-02T09:00',ext:'AGV-P-2026-01',draft:true},
+ ];
+ const DESC='This project groups olive and almond growers who share a common approach to sustainable, technified cultivation. Participating holdings manage traditional, intensive and hedgerow olive systems, and are adopting cover crops, organic amendments and reduced tillage to rebuild soil organic carbon while protecting soil from erosion.';
+ const DESC_MULTI='Grouped project covering four growers (CC0101, CC0104, CC0107 and CC0109) managing separate holdings under different legal entities. Traditional and super-intensive olive, plus recently planted high-density almond. Practices include mulching, intercropping and renewable electricity for irrigation.';
+
+ const hold={};
+ const addH=(a,b,n)=>{(hold[a]??={});hold[a][b]=(hold[a][b]||0)+n};
+ let opSeq=[];
+ const buyerAt=date=>buyers.filter(b=>b.createdAt<=date);
+
+ P.forEach(s=>{
+  const dev=devs[s.d];
+  const fieldRefs=s.f.flatMap(fi=>F[fi].fields.map(fl=>({farmId:F[fi].id,code:fl.code})));
+  const area=s.zeroArea?0:(s.area??sum(s.f.flatMap(fi=>F[fi].fields.map(x=>x.areaHa))));
+  const p={id:s.legacy?'proj_MigEncinarLegacy0001':nid('proj'),name:s.n,businessId:dev.id,orgId:dev.orgs[s.org||0].id,extRef:s.ext,location:s.loc,lat:s.ll[0],lng:s.ll[1],areaHa:area,farmers:s.farmers??s.f.length,methodology:'Trinity NCM V1.1',status:s.draft?'Draft':'Active',sdgs:s.sdg,practices:s.pr.map(i=>PRACTICES[i]),coBenefits:[COBEN[0]].concat(R()<.5?[COBEN[1]]:[]),description:s.multiFarmerDesc?DESC_MULTI:DESC,createdAt:iso(s.c),updatedAt:iso(s.c),fieldRefs,documents:[],isTest:!!s.test};
+  D.projects.push(p);
+  if(s.draft) return;
+  // issuance
+  const issueAt=s.legacy?iso(s.c):addD(s.c,0,ri(0,3)+0.1);
+  const lines=[];
+  s.v.forEach(y=>s.t.forEach(t=>{
+   const srcs=s.bothSrc?['tec','bio']:[t==='red'?'tec':'bio'];
+   srcs.forEach(src=>{
+    const fr=s.bothSrc?fieldRefs[0]:pick(fieldRefs);
+    const aid=`${s.ext}:${fr.code}:${t}:${src}:${y}`;
+    if(!D.assets.find(a=>a.id===aid)) D.assets.push({id:aid,projectId:p.id,type:t,source:src,vintage:y,farmId:fr.farmId,fieldCode:fr.code});
+    const amt=s.legacy?2111:ri(60,460);
+    const ex=lines.find(l=>l.assetId===aid); if(ex) ex.amount+=amt; else lines.push({assetId:aid,amount:amt});
+   });
+  }));
+  const certFiles=s.noCert?[]:[`${s.ext}_verification_statement.pdf`];
+  const op={id:s.legacy?'op_MigIssueEncinarA0001':nid('op'),name:`Issuance ${s.v.join('/')} ${s.ext}`,type:'Issue',projectId:p.id,fromBusinessId:dev.id,targetBusinessId:null,lines,status:'Done',createdAt:issueAt,completedAt:issueAt,attachments:certFiles,notes:'',cert:s.noCert?null:{issuer:pick(['AENOR','Control Union','DNV','Bureau Veritas']),certId:'CERT-'+ri(10000,99999),certifiedAt:addD(issueAt,-ri(5,30)).slice(0,10)}};
+  if(s.declaredDelta) op.declared=sum(lines.map(l=>l.amount))+s.declaredDelta;
+  opSeq.push(op);
+  lines.forEach(l=>addH(l.assetId,dev.id,l.amount));
+  if(op.cert) p.documents.push({name:certFiles[0],kind:'Verification statement',addedAt:issueAt});
+  // transfers + retirements
+  let t=issueAt;
+  const nT=s.test?0:ri(3,7);
+  for(let k=0;k<nT;k++){
+   t=addD(t,ri(4,55),ri(0,8)); if(t>iso('2026-09-22T00:00')) break;
+   const cands=buyerAt(t); if(!cands.length) continue;
+   const b=pick(cands);
+   const avail=lines.map(l=>({a:l.assetId,h:hold[l.assetId][dev.id]||0})).filter(x=>x.h>0);
+   if(!avail.length) break;
+   const ch=pick(avail); const amt=Math.max(1,ri(1,Math.max(1,Math.floor(ch.h*.35))));
+   const cur=R()<.8?'EUR':'USD';
+   const tr={id:nid('op'),name:`${b.name.split(' ')[0]} purchase ${fD(t)}`,type:'Transfer',projectId:p.id,fromBusinessId:dev.id,targetBusinessId:b.id,lines:[{assetId:ch.a,amount:amt,price:ri(18,62),currency:cur}],status:'Done',createdAt:t,completedAt:t,attachments:R()<.6?[`invoice_${ri(1000,9999)}.pdf`]:[],notes:''};
+   opSeq.push(tr); addH(ch.a,dev.id,-amt); addH(ch.a,b.id,amt);
+   if(R()<.45){const rt=addD(t,ri(1,40)); if(rt<iso('2026-09-22')){const ra=ri(1,amt);opSeq.push({id:nid('op'),name:`Retirement ${b.name.split(' ')[0]}`,type:'Retire',projectId:p.id,fromBusinessId:b.id,targetBusinessId:null,lines:[{assetId:ch.a,amount:ra}],status:'Done',createdAt:rt,completedAt:rt,attachments:[],notes:'Retired on behalf of '+b.name}); addH(ch.a,b.id,-ra);}}
+  }
+ });
+ // pending and cancelled operations (reserve but don't move)
+ const openable=D.projects.filter(p=>p.status==='Active'&&!p.isTest);
+ const mkOpen=(status,dt)=>{const p=pick(openable);const dev=byId(D.businesses,p.businessId);const as=D.assets.filter(a=>a.projectId===p.id&&(hold[a.id]?.[dev.id]||0)>5);if(!as.length)return;const a=pick(as);const b=pick(buyerAt(dt));const amt=ri(3,Math.min(40,hold[a.id][dev.id]-1));opSeq.push({id:nid('op'),name:`${b.name.split(' ')[0]} order ${fD(dt)}`,type:'Transfer',projectId:p.id,fromBusinessId:dev.id,targetBusinessId:b.id,lines:[{assetId:a.id,amount:amt,price:ri(20,55),currency:'EUR'}],status,createdAt:dt,completedAt:status==='Cancelled'?dt:null,attachments:[],notes:status==='Cancelled'?'Buyer withdrew order':''});};
+ mkOpen('Pending','2026-09-17T11:20:00');mkOpen('Pending','2026-09-21T16:45:10');mkOpen('Pending','2026-09-23T09:05:33');
+ mkOpen('Cancelled','2026-07-14T10:00:00');mkOpen('Cancelled','2026-08-29T14:30:00');
+ D.operations=opSeq.sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+
+ const mkU=(name,email,role,biz,c)=>{const u={id:nid('usr'),name,email,role,businessId:biz?biz.id:null,createdAt:iso(c)};D.users.push(u);return u};
+ const me=mkU('Kiera Holland','kh@trinityagtech.com','Admin',null,'2026-02-10T09:00');
+ D.currentUserId=me.id;
+ mkU('Platform Ops','ops@registry-replica.example','Admin',null,'2026-01-21T10:00');
+ mkU('Dev Integrator','integrator+@partner-dev.example','Admin',null,'2026-02-09T12:00');
+ mkU('Lucía Ortega','lortega@agroverde.example','Business User',devs[0],'2026-02-10T19:45');
+ mkU('Andrés Molina','amolina@agroverde.example','Business User',devs[0],'2026-02-10T19:46');
+ mkU('Pilar Jiménez','pjimenez@sierramagina.example','Business User',devs[1],'2026-03-02T09:20');
+ mkU('Dehesa Viva','admin@dehesaviva.example','Business User',devs[2],'2026-04-22T10:02');
+ mkU('Erik Lindqvist','erik@nordicsoil.example','Business User',devs[3],'2026-05-14T08:00');
+ mkU('OLIVAR DEL GUADALQ S','compras@olivarguad.example','Business User',buyers[6],'2026-02-12T11:00');
+ mkU('Jaarce','jarce@kiwinorte.example','Business User',buyers[8],'2026-03-02T09:05');
+ mkU('Toby','toby@registry-replica.example','Business User',null,'2026-04-15T10:00');
+ mkU('Hanna Vogel','h.vogel@brauhaus-nord.example','Business User',buyers[9],'2026-03-15T14:10');
+ mkU('Sustainability Team','esg@atlasmutual.example','Business User',buyers[11],'2026-04-20T12:30');
+ return D;
+}
+let DB=seed();
+
+/* ================= ledger ================= */
+function ledger(){
+ const hold={},reserved={},issued={},retired={};
+ const add=(m,a,b,n)=>{(m[a]??={});m[a][b]=(m[a][b]||0)+n};
+ [...DB.operations].sort((a,b)=>a.createdAt.localeCompare(b.createdAt)).forEach(op=>{
+  if(op.status==='Cancelled') return;
+  op.lines.forEach(l=>{
+   if(op.status==='Pending'){ if(op.type!=='Issue') add(reserved,l.assetId,op.fromBusinessId,l.amount); return; }
+   if(op.type==='Issue'){add(hold,l.assetId,op.fromBusinessId,l.amount);issued[l.assetId]=(issued[l.assetId]||0)+l.amount}
+   else if(op.type==='Transfer'){add(hold,l.assetId,op.fromBusinessId,-l.amount);add(hold,l.assetId,op.targetBusinessId,l.amount)}
+   else if(op.type==='Retire'){add(hold,l.assetId,op.fromBusinessId,-l.amount);retired[l.assetId]=(retired[l.assetId]||0)+l.amount}
+  });
+ });
+ return {hold,reserved,issued,retired,
+  held:(a,b)=>hold[a]?.[b]||0,
+  free:(a,b)=>(hold[a]?.[b]||0)-(reserved[a]?.[b]||0)};
+}
+const opTotal=op=>sum(op.lines.map(l=>l.amount));
+const opTypes=op=>[...new Set(op.lines.map(l=>DB.assets.find(a=>a.id===l.assetId)?.type).filter(Boolean))].sort((a,b)=>TORDER.indexOf(a)-TORDER.indexOf(b));
+const projAssets=pid=>DB.assets.filter(a=>a.projectId===pid);
+function projStats(p,L=ledger()){
+ const as=projAssets(p.id);
+ return {issued:sum(as.map(a=>L.issued[a.id]||0)),available:sum(as.map(a=>L.held(a.id,p.businessId))),retired:sum(as.map(a=>L.retired[a.id]||0)),types:[...new Set(as.filter(a=>L.issued[a.id]).map(a=>a.type))].sort((a,b)=>TORDER.indexOf(a)-TORDER.indexOf(b))};
+}
+const bizName=id=>byId(DB.businesses,id)?.name||'—';
+
+/* ================= ui helpers ================= */
+const UI={pages:{},per:{},q:{}};
+function toast(msg){const t=document.createElement('div');t.textContent=msg;document.getElementById('toast').appendChild(t);setTimeout(()=>t.remove(),2400)}
+function copy(txt){(navigator.clipboard?.writeText(txt)||Promise.reject()).then(()=>toast('Copied: '+txt)).catch(()=>toast('ID: '+txt))}
+function modal(html,wide){document.getElementById('modal').innerHTML=`<div class="ov" data-a="closeov"><div class="dlg ${wide?'wide':''}">${html}</div></div>`}
+function closeModal(){document.getElementById('modal').innerHTML=''}
+function confirmDlg(title,body,onOk,okLabel='Delete'){modal(`<h3>${esc(title)}</h3><p class="sub">${body}</p><div class="dlgfoot"><button class="btn" data-a="close">Cancel</button><button class="btn dan" id="okbtn">${okLabel}</button></div>`);document.getElementById('okbtn').onclick=()=>{onOk();closeModal()}}
+const tbadge=t=>`<span class="badge ${TYPES[t].c}">${TYPES[t].s}</span>`;
+const achip=t=>`<span class="atype">${TYPES[t].ic}${TYPES[t].l}</span>`;
+const sbadge=s=>`<span class="badge b-${s.toLowerCase()}">${s==='Done'?'Done':s}</span>`;
+const bizBadge=t=>`<span class="badge ${t==='Buyer'?'b-buy':'b-dev'}">${t}</span>`;
+const ib=(icon,title,a,extra='',cls='')=>`<button class="icb ${cls}" title="${title}" aria-label="${title}" data-a="${a}" ${extra}>${icon}</button>`;
+const il=(icon,title,href)=>`<a class="icb" title="${title}" aria-label="${title}" href="${href}">${icon}</a>`;
+
+function paged(key,rows,cols,{empty='No results.',per=10}={}){
+ const pp=UI.per[key]||per; const total=rows.length; const pages=Math.max(1,Math.ceil(total/pp));
+ let pg=Math.min(UI.pages[key]||1,pages); UI.pages[key]=pg;
+ const slice=rows.slice((pg-1)*pp,pg*pp);
+ const head=cols.map(c=>`<th class="${c.cls||''}">${c.h}</th>`).join('');
+ const body=slice.length?slice.map(r=>`<tr>${cols.map(c=>`<td class="${c.cls||''}">${c.r(r)}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="${cols.length}" class="empty">${empty}</td></tr>`;
+ const from=total?(pg-1)*pp+1:0,to=Math.min(pg*pp,total);
+ return `<div class="tw"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>
+ <div class="pager"><span>Showing ${from} to ${to} of ${total} results</span><span class="pg">Rows per page <select data-per="${key}">${[10,20,50].map(n=>`<option ${n===pp?'selected':''}>${n}</option>`).join('')}</select>
+ <button class="icb" data-pg="${key}:1" ${pg===1?'disabled':''} aria-label="First page">${I.chevLL}</button><button class="icb" data-pg="${key}:${pg-1}" ${pg===1?'disabled':''} aria-label="Previous page">${I.chevL}</button><button class="icb" data-pg="${key}:${pg+1}" ${pg===pages?'disabled':''} aria-label="Next page">${I.chevR}</button><button class="icb" data-pg="${key}:${pages}" ${pg===pages?'disabled':''} aria-label="Last page">${I.chevRR}</button></span></div>`;
+}
+const searchBox=(key,ph)=>`<input type="text" class="search" placeholder="${ph}" data-q="${key}" value="${esc(UI.q[key]||'')}"> `;
+const match=(key,...fields)=>{const q=(UI.q[key]||'').toLowerCase().trim();return !q||fields.join(' ').toLowerCase().includes(q)};
+
+/* ================= router ================= */
+function parse(){const h=location.hash.slice(1)||'/businesses';const [path,qs]=h.split('?');return {parts:path.split('/').filter(Boolean),q:Object.fromEntries(new URLSearchParams(qs||''))}}
+function go(h){location.hash=h}
+function render(){
+ const {parts,q}=parse(); const m=document.getElementById('main');
+ const sec=parts[0]||'businesses';
+ renderSide(sec);
+ let html='';
+ try{
+  if(sec==='businesses') html=parts[1]?vBusiness(parts[1],q):vBusinesses();
+  else if(sec==='farms') html=parts[1]?vFarm(parts[1]):vFarms();
+  else if(sec==='projects'){ if(parts[1]==='create') html=vProjectForm(null); else if(parts[2]==='mint') html=vMint(parts[1]); else if(parts[2]==='edit') html=vProjectForm(parts[1]); else html=parts[1]?vProject(parts[1],q):vProjects(); }
+  else if(sec==='operations') html=parts[1]==='create'?vCreateOp(q):vOperations(q);
+  else if(sec==='users') html=vUsers();
+  else html='<div class="empty">Not found</div>';
+ }catch(e){console.error(e);html=`<div class="empty">Error rendering view: ${esc(e.message)}</div>`}
+ m.innerHTML=html;
+ if(AFTER){const f=AFTER;AFTER=null;f()}
+}
+let AFTER=null;
+function renderSide(sec){
+ const me=byId(DB.users,DB.currentUserId)||{name:'User',email:''};
+ const ini=me.name.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();
+ const L=(k,ic,l)=>`<a href="#/${k}" class="${sec===k?'on':''}">${ic.replace('<svg','<svg width="16" height="16"')}<span class="lbl">${l}</span></a>`;
+ const side=document.getElementById('side');
+ side.innerHTML=`<a class="logo" href="#/businesses">${LOGO}<span class="wm lbl">trinity<small>NATURAL CAPITAL GROUP</small></span></a>
+ <nav class="nav">${L('businesses',I.biz,'Businesses')}${L('farms',I.farm,'Farms')}${L('projects',I.proj,'Projects')}${L('operations',I.ops,'Operations')}${L('users',I.users,'Users')}</nav>
+ <div class="sidefoot"><div class="langrow lbl"><select aria-label="Language" data-lang><option>🇬🇧 EN</option><option>🇪🇸 ES</option></select><button class="icb" data-a="collapse" aria-label="Collapse sidebar">${I.panel}</button></div>
+ <div class="me"><div class="av">${ini}</div><div class="lbl"><b>${esc(me.name)}</b><span>${esc(me.email)}</span></div></div></div>`;
+}
+
+/* ================= businesses ================= */
+function vBusinesses(){
+ const rows=DB.businesses.filter(b=>match('biz',b.name,b.extRef,b.type)).sort((a,b)=>(a.type===b.type?0:a.type==='Buyer'?1:-1)||(b.createdAt>a.createdAt?1:-1)*(a.type==='Buyer'&&b.type==='Buyer'&&a.extRef.startsWith('mig')===b.extRef.startsWith('mig')?1:1));
+ return `<div class="crumb">Businesses</div>
+ <div class="head"><div><h1>Manage Businesses</h1><p class="sub">View and manage all registered businesses in the system.</p></div><button class="btn pri" data-a="newBiz">${I.plus.replace('<svg','<svg width="14"')} Create Business</button></div>
+ ${searchBox('biz','Search name or external reference')}
+ ${paged('biz',rows,[
+  {h:'Business',r:b=>`<div style="font-weight:500">${esc(b.name)}</div><div class="small">${esc(b.extRef)}</div>`},
+  {h:'Type',r:b=>bizBadge(b.type)},
+  {h:'Created At',r:b=>fD(b.createdAt)},{h:'Updated At',r:b=>fD(b.updatedAt)},
+  {h:'',cls:'act',r:b=>il(I.eye,'View details','#/businesses/'+b.id)+ib(I.copy,'Copy ID','copy',`data-id="${b.id}"`)+ib(I.trash,'Delete business','delBiz',`data-id="${b.id}"`,'dan')}
+ ])}`;
+}
+function vBusiness(id,q){
+ const b=byId(DB.businesses,id); if(!b) return '<div class="empty">Business not found</div>';
+ const tab=q.tab||'details'; const L=ledger();
+ const T=(k,l)=>`<button class="${tab===k?'on':''}" data-go="#/businesses/${id}?tab=${k}">${l}</button>`;
+ let body='';
+ if(tab==='details') body=`<div class="card"><h2>Business Information</h2><p class="sub">Basic details and identification information for this business.</p><div class="kv">
+  <div><label>${I.tag.replace('<svg','<svg width="14"')} Name</label>${esc(b.name)} ${bizBadge(b.type)}</div>
+  <div><label>${I.hash.replace('<svg','<svg width="14"')} External Reference</label><span class="mono">${esc(b.extRef)}</span> ${ib(I.copy,'Copy','copy',`data-id="${esc(b.extRef)}"`)}</div>
+  <div><label>${I.biz.replace('<svg','<svg width="14"')} Default Organization</label>${esc(b.orgs.find(o=>o.isDefault)?.name)}</div></div></div>
+  <div class="card"><h2>Metadata</h2><p class="sub">Timestamps and system information for this business.</p><div class="kv">
+  <div><label>${I.cal.replace('<svg','<svg width="14"')} Created At</label>${fLong(b.createdAt)} <span class="small">${new Date(b.createdAt).toLocaleString('en-US',{dateStyle:'full',timeStyle:'short'})}</span></div>
+  <div><label>${I.hash.replace('<svg','<svg width="14"')} Business ID</label><span class="mono">${b.id}</span> ${ib(I.copy,'Copy','copy',`data-id="${b.id}"`)}<div class="small">Internal identifier used by the system to reference this business.</div></div></div></div>`;
+ if(tab==='organizations') body=`<div class="head" style="justify-content:flex-end"><button class="btn pri" data-a="newOrg" data-id="${b.id}">${I.plus.replace('<svg','<svg width="14"')} Add organization</button></div><div style="height:10px"></div>`+paged('org'+id,b.orgs,[
+  {h:'Name',r:o=>`${esc(o.name)} ${o.isDefault?'<span class="badge b-lo">Default</span>':''}`},{h:'Created',r:o=>fD(o.createdAt)},
+  {h:'',cls:'act',r:o=>(o.isDefault?`<span class="small" style="margin-right:6px">Default organization</span>`:'')+ib(I.edit,'Edit organization','editOrg',`data-id="${b.id}" data-org="${o.id}"`)+(o.isDefault?'':ib(I.trash,'Delete organization','delOrg',`data-id="${b.id}" data-org="${o.id}"`,'dan'))+ib(I.copy,'Copy ID','copy',`data-id="${o.id}"`)}]);
+ if(tab==='farms') body=farmTable('bf'+id,DB.farms.filter(f=>f.businessId===id));
+ if(tab==='wallet'){
+  const mine=DB.assets.filter(a=>L.held(a.id,id)>0);
+  const byT={};mine.forEach(a=>byT[a.type]=(byT[a.type]||0)+L.held(a.id,id));
+  const byP={};mine.forEach(a=>{(byP[a.projectId]??={});byP[a.projectId][a.type]=(byP[a.projectId][a.type]||0)+L.held(a.id,id)});
+  const retired=sum(DB.operations.filter(o=>o.type==='Retire'&&o.status==='Done'&&o.fromBusinessId===id).map(opTotal));
+  body=`<div class="card"><h2 style="font-size:14px">${I.trend.replace('<svg','<svg width="14"')} Total Balance</h2><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">${Object.keys(byT).length?TORDER.filter(t=>byT[t]).map(t=>`<div class="alloc" style="margin:0">${tbadge(t)} <b style="font-size:18px;margin-left:6px">${fN(byT[t])}</b> <span class="small">tokens</span></div>`).join(''):'<span class="small">No tokens held.</span>'}${retired?`<div class="alloc" style="margin:0"><span class="badge b-lo">RETIRED</span> <b style="font-size:18px;margin-left:6px">${fN(retired)}</b> <span class="small">tokens</span></div>`:''}</div></div>
+  <div class="card"><h2 style="font-size:14px">By Project</h2><div style="margin-top:10px">${Object.entries(byP).map(([pid,tt])=>`<div class="alloc"><a href="#/projects/${pid}" style="font-size:13px;text-decoration:none">${esc(byId(DB.projects,pid)?.name)}</a><div style="margin-top:6px;display:flex;gap:8px">${TORDER.filter(t=>tt[t]).map(t=>`<span class="alloc" style="margin:0;padding:4px 8px">${tbadge(t)} <b class="mono">${fN(tt[t])}</b></span>`).join('')}</div></div>`).join('')||'<span class="small">Nothing to show.</span>'}</div></div>`;
+ }
+ if(tab==='operations') body=opsTable('bo'+id,DB.operations.filter(o=>o.fromBusinessId===id||o.targetBusinessId===id),false);
+ return `<div class="crumb"><a href="#/businesses" class="icb">${I.back}</a>${esc(b.name)}</div>
+ <h1 style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${esc(b.name)} ${bizBadge(b.type)}</h1>
+ <p class="small" style="margin:6px 0 18px">${esc(b.extRef)} &nbsp;·&nbsp; Created ${fLong(b.createdAt)}</p>
+ <div class="tabs">${T('details','Details')}${T('organizations','Organizations')}${T('farms','Farms')}${T('wallet','Wallet')}${T('operations','Operations')}</div>${body}`;
+}
+
+/* ================= farms ================= */
+function farmTable(key,rows){return paged(key,rows,[
+ {h:'Farm',r:f=>`<div style="font-weight:500">${esc(f.name)}</div><div class="small">${esc(f.extRef)}</div>`},
+ {h:'Created At',r:f=>fD(f.createdAt)},{h:'Updated At',r:f=>fD(f.updatedAt)},
+ {h:'',cls:'act',r:f=>il(I.eye,'View details','#/farms/'+f.id)+ib(I.copy,'Copy ID','copy',`data-id="${f.id}"`)+ib(I.trash,'Delete farm','delFarm',`data-id="${f.id}"`,'dan')}])}
+function vFarms(){
+ return `<div class="crumb">Farms</div><div class="head"><div><h1>Manage Farms</h1><p class="sub">View and manage all registered farms in the system.</p></div><button class="btn pri" data-a="newFarm">${I.plus.replace('<svg','<svg width="14"')} Create Farm</button></div>
+ ${searchBox('farm','Search farm or reference')}${farmTable('farms',DB.farms.filter(f=>match('farm',f.name,f.extRef,bizName(f.businessId))).sort((a,b)=>b.createdAt.localeCompare(a.createdAt)))}`;
+}
+function vFarm(id){
+ const f=byId(DB.farms,id); if(!f) return '<div class="empty">Farm not found</div>';
+ const projs=DB.projects.filter(p=>p.fieldRefs.some(r=>r.farmId===id));
+ return `<div class="crumb"><a href="#/farms" class="icb">${I.back}</a>${esc(f.name)}</div><h1>${esc(f.name)}</h1><p class="small" style="margin:6px 0 18px">${esc(f.extRef)} · Owner <a href="#/businesses/${f.businessId}">${esc(bizName(f.businessId))}</a> · Created ${fLong(f.createdAt)}</p>
+ <div class="card"><h2>Fields</h2><p class="sub">${f.fields.length} fields · ${fN(sum(f.fields.map(x=>x.areaHa)))} ha</p>${f.fields.length?`<div class="tw"><table><thead><tr><th>Field code</th><th class="num">Area (ha)</th><th>Used in projects</th></tr></thead><tbody>${f.fields.map(fl=>`<tr><td class="mono">${esc(fl.code)}</td><td class="num">${fN(fl.areaHa)}</td><td>${projs.filter(p=>p.fieldRefs.some(r=>r.farmId===id&&r.code===fl.code)).map(p=>`<a href="#/projects/${p.id}">${esc(p.name)}</a>`).join('<br>')||'<span class="small">—</span>'}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">No fields registered for this farm.</div>'}
+ <div style="margin-top:10px"><button class="btn" data-a="addField" data-id="${id}">${I.plus.replace('<svg','<svg width="14"')} Add field</button></div></div>`;
+}
+
+/* ================= projects ================= */
+function vProjects(){
+ const L=ledger();
+ const rows=DB.projects.filter(p=>match('proj',p.name,bizName(p.businessId),p.location)).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+ return `<div class="crumb">Projects</div><div class="head"><div><h1>Manage Projects</h1><p class="sub">View and manage all projects in the system.</p></div><a class="btn pri" href="#/projects/create">${I.plus.replace('<svg','<svg width="14"')} Create Project</a></div>
+ ${searchBox('proj','Search project, developer or location')}
+ ${paged('projects',rows,[
+  {h:'Project Name',r:p=>`<a href="#/projects/${p.id}" style="text-decoration:none;font-weight:500">${esc(p.name)}</a>`},
+  {h:'Project developer',r:p=>`<span class="trunc" style="display:inline-block;max-width:150px">${esc(bizName(p.businessId))}</span>`},
+  {h:'Assets (available)',cls:'num',r:p=>fN(projStats(p,L).available)},
+  {h:'Types (issued)',r:p=>`<div class="wrapb">${projStats(p,L).types.map(tbadge).join('')||'<span class="small">—</span>'}</div>`},
+  {h:'Status',r:p=>`<span class="badge b-${p.status.toLowerCase()}">${p.status}</span>`},
+  {h:'Created At',r:p=>fD(p.createdAt)},
+  {h:'',cls:'act',r:p=>il(I.eye,'View details','#/projects/'+p.id)+il(I.edit,'Edit project',`#/projects/${p.id}/edit`)+il(I.coin,'Add tokens',`#/projects/${p.id}/mint`)+ib(I.copy,'Copy project ID','copy',`data-id="${p.id}"`)+ib(I.trash,'Delete project','delProj',`data-id="${p.id}"`,'dan')}
+ ])}`;
+}
+function vProject(id,q){
+ const p=byId(DB.projects,id); if(!p) return '<div class="empty">Project not found</div>';
+ const L=ledger(); const st=projStats(p,L); const tab=q.tab||'overview';
+ const T=(k,l)=>`<button class="${tab===k?'on':''}" data-go="#/projects/${id}?tab=${k}">${l}</button>`;
+ const vint=[...new Set(projAssets(id).map(a=>a.vintage))].sort();
+ let body='';
+ if(tab==='overview'){
+  body=`<div class="stats">
+  <div class="stat"><div class="ic" style="background:#dcfce7;color:#15803d">${I.trend}</div><div class="l">Tokens issued</div><div><span class="v">${fN(st.issued)}</span><span class="u">tCO2e</span></div></div>
+  <div class="stat"><div class="ic" style="background:#e0f2fe;color:#0369a1">${I.target}</div><div class="l">Available</div><div><span class="v">${fN(st.available)}</span><span class="u">tCO2e</span></div></div>
+  <div class="stat"><div class="ic" style="background:#f3e8ff;color:#7e22ce">${I.users}</div><div class="l">Farmers</div><div><span class="v">${p.farmers}</span><span class="u">cooperatives</span></div></div>
+  <div class="stat"><div class="ic" style="background:#ecfccb;color:#4d7c0f">${I.area}</div><div class="l">Total area</div><div><span class="v">${fN(p.areaHa)}</span><span class="u">hectares</span></div></div></div>
+  <div class="grid2"><div>
+   <div class="imgph">NATURAL CAPITAL MARKETS</div>
+   <div class="card"><h2 style="display:flex;gap:8px;align-items:center">${I.leaf.replace('<svg','<svg width="18" style="color:#16a34a"')} About this project</h2><hr style="border:0;border-top:1px solid var(--bd);margin:12px 0">
+   <p style="font-size:13px;color:#334155">${esc(p.description)}</p><h4 style="font-size:13px;margin:14px 0 8px">Practices Implemented</h4><div class="pgrid">${p.practices.map(x=>`<div class="practice">${I.leaf.replace('<svg','<svg width="16" style="color:#2c7fa6"')}${esc(x)}</div>`).join('')}</div></div>
+   <div class="card"><h2 style="display:flex;gap:8px;align-items:center">${I.pin.replace('<svg','<svg width="18" style="color:#2c7fa6"')} Project location</h2><div class="map" style="margin-top:12px">${mapSvg(p)}</div></div>
+  </div><div class="side-panel">
+   <h4>STATUS</h4><span class="badge b-${p.status.toLowerCase()}">${p.status}</span>
+   <h4>VINTAGE YEARS</h4>${vint.map(v=>`<b style="margin-right:10px">${v}</b>`).join('')||'<span class="small">None issued</span>'}
+   <h4>LOCATION</h4><div style="display:flex;gap:6px;align-items:center">${I.pin.replace('<svg','<svg width="14"')}${esc(p.location)}</div>
+   <h4>SDGS</h4>${p.sdgs.map(n=>{const s=SDGS[n-1];return `<span class="sdg" style="background:${s[2]}" title="SDG ${n} – ${s[1]}">${n}</span>`}).join('')}
+   <h4>CO-BENEFITS</h4>${p.coBenefits.map(c=>`<div style="display:flex;gap:6px;align-items:center;margin-bottom:4px">${I.leaf.replace('<svg','<svg width="14" style="color:#16a34a"')}${esc(c)}</div>`).join('')}
+   <h4>METHODOLOGY</h4>${esc(p.methodology)}
+  </div></div>`;
+ }
+ if(tab==='documents') body=p.documents.length?`<div class="tw"><table><thead><tr><th>Document</th><th>Type</th><th>Added</th></tr></thead><tbody>${p.documents.map(d=>`<tr><td>${I.doc.replace('<svg','<svg width="14" style="vertical-align:-2px;margin-right:6px"')}${esc(d.name)}</td><td>${esc(d.kind)}</td><td>${fD(d.addedAt)}</td></tr>`).join('')}</tbody></table></div>`:`<div class="card empty"><b style="color:var(--tx)">No documents yet</b><br>Project documents will appear here.</div>`;
+ if(tab==='operations') body=opsTable('po'+id,DB.operations.filter(o=>o.projectId===id),false);
+ if(tab==='assets') body=paged('pa'+id,projAssets(id).sort((a,b)=>b.vintage-a.vintage),[
+  {h:'Asset ID',r:a=>`<span class="mono">${esc(a.id)}</span>`},{h:'Asset type',r:a=>achip(a.type)},{h:'Source',r:a=>SRC[a.source]},{h:'Vintage Year',r:a=>a.vintage},
+  {h:'Tokens',cls:'num',r:a=>`<span class="mono">${fN(L.held(a.id,p.businessId))} / ${fN(L.issued[a.id]||0)}</span>`}],{empty:'No assets issued yet.'});
+ return `<div class="hero"><div class="top"><span class="pill ${p.status==='Draft'?'draft':''}">● ${p.status} Project</span><div class="acts">
+  <button class="btn" data-a="share" data-id="${id}">${I.share.replace('<svg','<svg width="14"')} Share Project</button>
+  <a class="btn" href="#/projects/${id}/mint">${I.coin.replace('<svg','<svg width="14"')} Add tokens</a>
+  <a class="btn" href="#/operations/create?projectId=${id}">${I.plus.replace('<svg','<svg width="14"')} Create Operation</a>
+  <a class="btn" href="#/projects/${id}/edit">${I.edit.replace('<svg','<svg width="14"')} Edit Project</a></div></div>
+  <div class="dev">${esc(bizName(p.businessId))}</div><h1>${esc(p.name)}</h1>
+  <div class="meta"><span>${I.pin.replace('<svg','<svg width="14" style="vertical-align:-2px"')} ${esc(p.location)}</span><span>${I.cal.replace('<svg','<svg width="14" style="vertical-align:-2px"')} Registered ${new Date(p.createdAt).getFullYear()}</span><span>${I.leaf.replace('<svg','<svg width="14" style="vertical-align:-2px"')} ${esc(p.methodology)}</span></div>
+  <div class="tabs">${T('overview','Overview')}${T('documents','Documents')}${T('operations','Operations')}${T('assets','Assets')}</div></div>${body}`;
+}
+function mapSvg(p){
+ const x=((p.lng+180)/360)*100,y=((90-p.lat)/180)*100;
+ return `<svg viewBox="0 0 100 100" preserveAspectRatio="none" style="width:100%;height:100%;position:absolute;inset:0"><defs><pattern id="g" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M10 0H0V10" fill="none" stroke="#c3d6de" stroke-width=".3"/></pattern></defs><rect width="100" height="100" fill="url(#g)"/></svg>
+ <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-100%);color:#1d4a73">${I.pin.replace('<svg','<svg width="34" height="34"')}</div>
+ <div style="position:absolute;left:10px;bottom:8px;font-size:11px;color:#475569;background:#fffc;padding:2px 6px;border-radius:4px">${p.lat.toFixed(4)}, ${p.lng.toFixed(4)} · map tiles omitted in replica</div>`;
+}
+
+/* ================= operations ================= */
+function amountCell(op){
+ const n=op.declared??opTotal(op);
+ if(op.type==='Issue') return `<span class="pos">+${n}</span>`;
+ if(op.type==='Retire') return `<span class="negr">-${n}</span>`;
+ return `<span class="negr">${n}</span>`;
+}
+function opsTable(key,rows,full=true){
+ const cols=[
+  {h:'Transaction ID',r:o=>`<a class="mono trunc" style="display:inline-block;max-width:150px;text-decoration:none" href="javascript:void 0" data-a="opView" data-id="${o.id}" title="${o.id}">${o.id}</a>`},
+  {h:'Date',r:o=>`<span style="white-space:nowrap">${fDT(o.createdAt,full)}</span>`},
+  {h:'Type',r:o=>o.type},
+  {h:'Target Business',r:o=>o.targetBusinessId?`<span class="trunc" style="display:inline-block;max-width:170px" title="${esc(bizName(o.targetBusinessId))}">${esc(bizName(o.targetBusinessId))}</span>`:'—'},
+  {h:'Asset type',r:o=>`<div class="stack">${opTypes(o).map(achip).join('')}</div>`},
+  {h:'Status',r:o=>sbadge(o.status)},
+  {h:'Order amount',cls:'num',r:amountCell}];
+ if(full) cols.push({h:'Issued At',r:o=>`<span style="white-space:nowrap">${fDT(o.createdAt)}</span>`},{h:'Completed At',r:o=>`<span style="white-space:nowrap">${o.completedAt?fDT(o.completedAt):'—'}</span>`});
+ cols.push({h:'Attachments',cls:'num',r:o=>o.attachments.length||'—'});
+ if(full) cols.push({h:'',cls:'act',r:o=>ib(I.dots,'Open menu','opMenu',`data-id="${o.id}"`)});
+ return paged(key,rows,cols,{empty:'No operations.'});
+}
+function vOperations(q){
+ const st=q.status||'all';
+ const all=DB.operations.filter(o=>match('ops',o.id,o.name,o.type,bizName(o.targetBusinessId),byId(DB.projects,o.projectId)?.name));
+ const cnt=s=>DB.operations.filter(o=>o.status===s).length;
+ const map={all:null,pending:'Pending',completed:'Done',cancelled:'Cancelled'};
+ const rows=st==='all'?all:all.filter(o=>o.status===map[st]);
+ const T=(k,l)=>`<button class="${st===k?'on':''}" data-go="#/operations${k==='all'?'':'?status='+k}">${l}</button>`;
+ return `<div class="crumb">Operations</div><h1>Manage Operations</h1><p class="sub">View and manage asset operations. Issue pending operations or cancel them as needed.</p>
+ <div class="tabs">${T('all',`All (${DB.operations.length})`)}${T('pending',`Pending (${cnt('Pending')})`)}${T('completed',`Completed (${cnt('Done')})`)}${T('cancelled',`Cancelled (${cnt('Cancelled')})`)}</div><br>
+ ${searchBox('ops','Search ID, project or business')}${opsTable('ops'+st,rows,true)}`;
+}
+function opView(id){
+ const o=byId(DB.operations,id); const p=byId(DB.projects,o.projectId);
+ modal(`<h3>${esc(o.name||o.id)}</h3><p class="small mono" style="margin:2px 0 14px">${o.id}</p>
+ <div class="row2" style="font-size:13px"><div><b>Type</b><br>${o.type}</div><div><b>Status</b><br>${sbadge(o.status)}</div>
+ <div><b>Project</b><br><a href="#/projects/${p?.id}" data-a="close">${esc(p?.name)}</a></div><div><b>From</b><br>${esc(bizName(o.fromBusinessId))}</div>
+ <div><b>Target</b><br>${o.targetBusinessId?esc(bizName(o.targetBusinessId)):'—'}</div><div><b>Created / completed</b><br>${fDT(o.createdAt)}<br>${o.completedAt?fDT(o.completedAt):'—'}</div></div>
+ ${o.cert?`<p style="font-size:13px"><b>Certification</b>: ${esc(o.cert.issuer)} · ${esc(o.cert.certId)} · ${o.cert.certifiedAt}</p>`:''}
+ ${o.declared!=null?`<p class="err">Declared order amount ${o.declared} differs from sum of asset lines ${opTotal(o)}.</p>`:''}
+ <div class="tw" style="margin-top:12px"><table><thead><tr><th>Asset</th><th class="num">Tokens</th><th class="num">Price</th></tr></thead><tbody>${o.lines.map(l=>`<tr><td class="mono">${esc(l.assetId)}</td><td class="num">${fN(l.amount)}</td><td class="num">${l.price!=null?`${l.price} ${l.currency}`:'—'}</td></tr>`).join('')}</tbody></table></div>
+ <p style="font-size:13px"><b>Attachments</b>: ${o.attachments.map(esc).join(', ')||'None'}</p>${o.notes?`<p style="font-size:13px"><b>Notes</b>: ${esc(o.notes)}</p>`:''}
+ <div class="dlgfoot">${o.status==='Pending'?`<button class="btn dan" data-a="opCancel" data-id="${o.id}">Cancel operation</button><button class="btn pri" data-a="opIssue" data-id="${o.id}">Issue operation</button>`:''}<button class="btn" data-a="close">Close</button></div>`,true);
+}
+
+/* ================= create operation ================= */
+let CO=null;
+function vCreateOp(q){
+ const p=byId(DB.projects,q.projectId);
+ if(!p) return `<div class="crumb"><a href="#/operations">Operations</a> › Create Operation</div><div class="card"><h2>Select a project</h2><p class="sub">Operations are created from a project.</p><select data-a="coPick"><option value="">Choose project…</option>${DB.projects.filter(x=>x.status==='Active').map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select></div>`;
+ if(!CO||CO.pid!==p.id) CO={pid:p.id,type:'Transfer',name:'',target:'',notes:'',method:'type',from:p.businessId,files:[],amt:{},price:{},cur:{},err:{}};
+ const L=ledger();
+ const as=projAssets(p.id);
+ const holders=[...new Set(as.flatMap(a=>Object.keys(L.hold[a.id]||{}).filter(b=>L.held(a.id,b)>0)))];
+ const avT=t=>sum(as.filter(a=>a.type===t).map(a=>Math.max(0,L.free(a.id,CO.from))));
+ const types=TORDER.filter(t=>as.some(a=>a.type===t));
+ const years=[...new Set(as.map(a=>a.vintage))].sort((a,b)=>b-a);
+ const total=sum(Object.values(CO.amt).map(Number).filter(n=>n>0));
+ const targets=DB.businesses.filter(b=>b.id!==CO.from);
+ const allocBlock=CO.method==='type'?types.map(t=>`<div class="alloc"><div class="h">${achip(t)}<span class="small">Available: ${fN(avT(t))} tokens</span></div><div class="row3">
+   <div><label class="small">Tokens</label><div style="display:flex;gap:4px"><input type="number" min="0" data-co="amt:${t}" value="${CO.amt[t]||''}"><button class="btn" data-a="coMax" data-k="${t}" data-max="${avT(t)}">Max</button></div></div>
+   <div><label class="small">Price per token</label><input type="number" min="0" step="0.01" data-co="price:${t}" value="${CO.price[t]||''}"></div>
+   <div><label class="small">Currency</label><select data-co="cur:${t}">${['EUR','USD','GBP'].map(c=>`<option ${ (CO.cur[t]||'EUR')===c?'selected':''}>${c}</option>`).join('')}</select></div></div>${CO.err[t]?`<div class="err">${CO.err[t]}</div>`:''}</div>`).join('')
+  :`<div class="tw"><table><thead><tr><th>Vintage</th>${types.map(t=>`<th>${TYPES[t].l}</th>`).join('')}</tr></thead><tbody>${years.map(y=>`<tr><td><b>${y}</b></td>${types.map(t=>{const av=sum(as.filter(a=>a.type===t&&a.vintage===y).map(a=>Math.max(0,L.free(a.id,CO.from))));const k=t+'|'+y;return `<td>${as.some(a=>a.type===t&&a.vintage===y)?`<input type="number" min="0" max="${av}" data-co="amt:${k}" value="${CO.amt[k]||''}" style="max-width:110px"><div class="small">of ${fN(av)}</div>`:'<span class="small">—</span>'}${CO.err[k]?`<div class="err">${CO.err[k]}</div>`:''}</td>`}).join('')}</tr>`).join('')}</tbody></table></div>`;
+ return `<div class="crumb"><a href="#/operations">Operations</a> › Create Operation<span style="margin-left:auto"><a class="btn" href="#/projects/${p.id}">${I.back.replace('<svg','<svg width="14"')} Back to Project</a></span></div>
+ <h1>Create Operation</h1><p class="sub">Create a new operation to transfer or retire tokens for this project.</p>
+ <p><span class="alloc" style="padding:4px 8px">Project: <b>${esc(p.name)}</b></span> <span class="badge b-red" style="padding:5px 8px">Business: ${esc(bizName(CO.from))}</span></p>
+ <div style="max-width:880px">
+ <div class="card"><h2>Operation Details</h2><p class="sub">Configure operation type and provide a name for tracking.</p>
+  <div class="field"><label>Source business <span class="badge b-inf">replica extension</span></label><div class="hint">Live registry fixes the source to the project developer. Here you can pick any current holder, e.g. to retire on a buyer's behalf.</div><select data-co="from">${holders.concat(holders.includes(p.businessId)?[]:[p.businessId]).map(b=>`<option value="${b}" ${b===CO.from?'selected':''}>${esc(bizName(b))}</option>`).join('')}</select></div>
+  <label class="small" style="font-weight:600;letter-spacing:.05em">OPERATION TYPE</label>
+  <div class="row2" style="margin:6px 0 14px"><div class="opt ${CO.type==='Transfer'?'on':''}" data-a="coType" data-k="Transfer">${I.swap.replace('<svg','<svg width="20"')}<b>Transfer</b><span>Transfer assets to another business</span></div><div class="opt ${CO.type==='Retire'?'on':''}" data-a="coType" data-k="Retire">${I.fire.replace('<svg','<svg width="20"')}<b>Retire</b><span>Permanently retire assets (burn)</span></div></div>
+  <div class="field"><label>Operation Name *</label><input type="text" data-co="name" placeholder="e.g., Q1 2025 Token Transfer to Acme Corp" value="${esc(CO.name)}">${CO.err.name?`<div class="err">${CO.err.name}</div>`:''}</div>
+  ${CO.type==='Transfer'?`<div class="field"><label>Target Business *</label><select data-co="target"><option value="">Select target business</option>${targets.map(b=>`<option value="${b.id}" ${b.id===CO.target?'selected':''}>${esc(b.name)}</option>`).join('')}</select>${CO.err.target?`<div class="err">${CO.err.target}</div>`:''}</div>`:''}
+  <div class="field"><label>Reason / Notes (optional)</label><textarea data-co="notes" placeholder="Add any notes or reason for this operation...">${esc(CO.notes)}</textarea></div></div>
+ <div class="card"><h2>Attachments</h2><p class="sub">Upload files related to this operation (max 10 files, 16MB each)</p><label class="drop" style="display:block;cursor:pointer">${I.upload.replace('<svg','<svg width="20"')}<br>Click to upload or drag and drop<br><span class="small">${CO.files.length}/10 files · Max 16MB each · PDF, Images, Excel, CSV</span><input type="file" multiple hidden data-co="files"></label>${CO.files.length?`<p class="small">${CO.files.map(esc).join(', ')}</p>`:''}</div>
+ <div class="card"><h2>Asset Selection</h2><p class="sub">Choose how you want to allocate assets for this operation.</p>
+  <label class="small" style="font-weight:600;letter-spacing:.05em">ALLOCATION METHOD</label>
+  <div class="row2" style="margin:6px 0 14px"><div class="opt ${CO.method==='type'?'on':''}" data-a="coMethod" data-k="type"><b>By type</b><span>Total amounts per asset type (retention, reduction, removal)</span></div><div class="opt ${CO.method==='year'?'on':''}" data-a="coMethod" data-k="year"><b>By vintage year</b><span>Amounts per asset type for each vintage year</span></div></div>
+  <h4 style="margin:4px 0">Asset allocation</h4><p class="sub">${CO.method==='type'?'Enter the total amount and price for each asset type. Tokens will be allocated from the newest vintage years first.':'Enter amounts per type and vintage year.'}</p>${types.length?allocBlock:'<div class="empty">This project has no issued assets.</div>'}</div>
+ <div style="display:flex;justify-content:flex-end;gap:8px"><a class="btn" href="#/projects/${p.id}">Cancel</a><button class="btn pri" data-a="coSubmit" ${total>0?'':'disabled'}>Create Operation (${fN(total)} tokens)</button></div></div>`;
+}
+function coSubmit(){
+ const p=byId(DB.projects,CO.pid); const L=ledger(); const as=projAssets(p.id); CO.err={};
+ if(!CO.name.trim()) CO.err.name='Operation name is required.';
+ if(CO.type==='Transfer'&&!CO.target) CO.err.target='Select a target business.';
+ const lines=[];
+ const take=(pool,n,key,t)=>{let left=n;for(const a of pool){const f=Math.max(0,L.free(a.id,CO.from));if(!f)continue;const x=Math.min(f,left);if(x>0){lines.push({assetId:a.id,amount:x,...(CO.type==='Transfer'?{price:Number(CO.price[t]||0),currency:CO.cur[t]||'EUR'}:{})});left-=x}if(!left)break}if(left>0)CO.err[key]=`Only ${fN(n-left)} available.`};
+ Object.entries(CO.amt).forEach(([k,v])=>{const n=Math.floor(Number(v));if(!(n>0))return;const [t,y]=k.split('|');const pool=as.filter(a=>a.type===t&&(!y||a.vintage==y)).sort((a,b)=>b.vintage-a.vintage);take(pool,n,k,t)});
+ if(!lines.length&&!Object.keys(CO.err).length) CO.err.name='Allocate at least one token.';
+ if(Object.keys(CO.err).length){render();toast('Fix the highlighted fields');return}
+ const now=new Date().toISOString();
+ DB.operations.unshift({id:uid('op'),name:CO.name.trim(),type:CO.type,projectId:p.id,fromBusinessId:CO.from,targetBusinessId:CO.type==='Transfer'?CO.target:null,lines,status:'Pending',createdAt:now,completedAt:null,attachments:[...CO.files],notes:CO.notes});
+ CO=null; toast('Operation created as Pending'); go('#/operations?status=pending');
+}
+
+/* ================= add tokens (mint) ================= */
+let MT=null;
+function vMint(pid){
+ const p=byId(DB.projects,pid); if(!p) return '<div class="empty">Project not found</div>';
+ const maxIssued=Math.max(0,...projAssets(pid).map(a=>a.vintage));
+ const minY=maxIssued?maxIssued+1:2020, maxY=2026;
+ if(!MT||MT.pid!==pid) MT={pid,files:[],issuer:'',certId:'',certAt:'',years:[Math.min(maxY,Math.max(minY,2025))],vals:{},mode:'form',err:''};
+ const tot=sum(Object.values(MT.vals).flatMap(v=>Object.values(v).map(Number).filter(n=>n>0)));
+ const hasPdf=MT.files.some(f=>/\.pdf$/i.test(f));
+ const farms=[...new Set(p.fieldRefs.map(r=>r.farmId))].map(fid=>byId(DB.farms,fid));
+ const plan=()=>JSON.stringify({certification:{issuer:MT.issuer,certificateId:MT.certId,certifiedAt:MT.certAt,files:MT.files},assets:Object.entries(MT.vals).flatMap(([k,v])=>Object.entries(v).filter(([,n])=>Number(n)>0).map(([ts,n])=>{const [field,y]=k.split('|');const [t,s]=ts.split(':');return {field,vintage:+y,type:t,source:s,amount:+n}}))},null,2);
+ return `<div class="crumb"><a href="#/projects/${pid}" class="icb">${I.back}</a><div><div>Add tokens</div><div class="small" style="font-weight:400">${esc(p.name)}</div></div></div>
+ <div class="card"><h2>Certification (required)</h2><p class="sub">Upload certification first. The issuance operation will only be created after certification exists (at least 1 file and at least 1 PDF).</p>
+ <label class="drop" style="display:block;cursor:pointer">${I.upload.replace('<svg','<svg width="22"')}<br><b style="color:var(--tx)">Click to add files</b> or drag &amp; drop<br><span class="small">Must include at least one NEW PDF. Max 16MB per file.</span><input type="file" multiple hidden data-mt="files"></label>
+ <p>${hasPdf?`<span class="badge b-done">PDF attached</span> <span class="small">${MT.files.map(esc).join(', ')}</span>`:'<span class="badge b-cancelled">PDF required</span>'}</p></div>
+ <div class="card"><h2>Issuance plan</h2><p class="sub">Configure assets by field and vintage year.</p>
+ <div class="tabs"><button class="${MT.mode==='form'?'on':''}" data-a="mtMode" data-k="form">Form</button><button class="${MT.mode==='json'?'on':''}" data-a="mtMode" data-k="json">JSON</button></div>
+ <div class="row3"><div class="field"><label>Certificate issuer</label><input type="text" data-mt="issuer" placeholder="e.g. Verifier name" value="${esc(MT.issuer)}"></div><div class="field"><label>Registry / Certificate ID</label><input type="text" data-mt="certId" placeholder="e.g. CERT-12345" value="${esc(MT.certId)}"></div><div class="field"><label>Certified at</label><input type="date" data-mt="certAt" value="${MT.certAt}"></div></div>
+ <div style="display:flex;justify-content:flex-end;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap"><span class="alloc" style="margin:0;padding:6px 10px;font-size:12px">Allowed vintage years: ${minY}–${maxY} (max already issued: ${maxIssued||'none'})</span><button class="btn" data-a="mtYear" ${MT.years.length>=maxY-minY+1?'disabled':''}>${I.plus.replace('<svg','<svg width="14"')} Add year</button></div>
+ ${MT.mode==='form'?`<div class="tw"><table class="mgrid"><thead><tr><th style="text-align:left">Field</th>${MT.years.map(y=>`<th>${y} <button class="icb" data-a="mtDelYear" data-k="${y}" aria-label="Remove year">×</button></th>`).join('')}</tr></thead><tbody>
+  ${farms.map(f=>`<tr class="farm"><td colspan="${MT.years.length+1}">${esc(f.name)}</td></tr>`+p.fieldRefs.filter(r=>r.farmId===f.id).map(r=>`<tr><td style="text-align:left" class="mono">${esc(r.code)}</td>${MT.years.map(y=>{const v=MT.vals[r.code+'|'+y]||{};const s=sum(Object.values(v).map(Number).filter(n=>n>0));return `<td class="cell" data-a="mtCell" data-k="${esc(r.code)}|${y}">${s?`<b style="color:var(--tx)">${fN(s)}</b>`:'+'}</td>`}).join('')}</tr>`).join('')).join('')}
+ </tbody></table></div>`:`<textarea style="min-height:220px" class="mono" readonly>${esc(plan())}</textarea>`}
+ ${MT.err?`<p class="err">${MT.err}</p>`:''}
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px"><span class="small">${fN(tot)} tokens</span><span><button class="btn" data-a="mtClear">Clear</button> <button class="btn pri" data-a="mtIssue" ${tot>0&&hasPdf?'':'disabled'}>Issue tokens</button></span></div></div>`;
+}
+function mtCell(key){
+ const [code,y]=key.split('|'); const v=MT.vals[key]||{};
+ const row=(t,s)=>`<div style="display:flex;gap:10px;align-items:center;margin-bottom:6px"><span style="width:60px">${tbadge(t)}</span><input type="number" min="0" data-cell="${t}:${s}" value="${v[t+':'+s]||''}" placeholder="0"></div>`;
+ modal(`<h3>Asset Values</h3><p class="sub">Configure biogenic and technological asset values for <b>${esc(code)}</b> in vintage year <b>${y}</b>.</p>
+ <p class="small" style="font-weight:600;letter-spacing:.06em">BIOGENIC ASSETS</p>${['ret','red','rmv'].map(t=>row(t,'bio')).join('')}
+ <p class="small" style="font-weight:600;letter-spacing:.06em;margin-top:12px">TECHNOLOGICAL ASSETS</p>${['ret','red','rmv'].map(t=>row(t,'tec')).join('')}
+ <div class="dlgfoot" style="justify-content:space-between"><button class="btn ghost" style="color:var(--red)" data-a="cellClear">Clear All</button><span><button class="btn" data-a="close">Cancel</button> <button class="btn pri" data-a="cellSave" data-k="${esc(key)}">Save Values</button></span></div>`);
+}
+function mtIssue(){
+ const p=byId(DB.projects,MT.pid); const lines=[]; const now=new Date().toISOString();
+ Object.entries(MT.vals).forEach(([k,v])=>{const [code,y]=k.split('|');const fr=p.fieldRefs.find(r=>r.code===code);Object.entries(v).forEach(([ts,n])=>{n=Math.floor(Number(n));if(!(n>0))return;const [t,s]=ts.split(':');const aid=`${p.extRef||p.id}:${code}:${t}:${s}:${y}`;if(!DB.assets.find(a=>a.id===aid))DB.assets.push({id:aid,projectId:p.id,type:t,source:s,vintage:+y,farmId:fr?.farmId,fieldCode:code});lines.push({assetId:aid,amount:n})})});
+ DB.operations.unshift({id:uid('op'),name:`Issuance ${MT.years.join('/')}`,type:'Issue',projectId:p.id,fromBusinessId:p.businessId,targetBusinessId:null,lines,status:'Done',createdAt:now,completedAt:now,attachments:[...MT.files],notes:'',cert:{issuer:MT.issuer,certId:MT.certId,certifiedAt:MT.certAt}});
+ MT.files.forEach(f=>p.documents.push({name:f,kind:'Certification',addedAt:now}));
+ if(p.status==='Draft') p.status='Active';
+ MT=null; toast(`Issued ${fN(sum(lines.map(l=>l.amount)))} tokens`); go(`#/projects/${p.id}?tab=assets`);
+}
+
+/* ================= project form ================= */
+let PF=null;
+function vProjectForm(id){
+ const ex=id?byId(DB.projects,id):null;
+ if(!PF||PF.id!==(id||'new')) PF=ex?{id,biz:ex.businessId,org:ex.orgId,name:ex.name,ext:ex.extRef,lat:ex.lat,lng:ex.lng,area:ex.areaHa,desc:ex.description,sdgs:[...ex.sdgs],practices:[...ex.practices],loc:ex.location,farms:[...new Set(ex.fieldRefs.map(r=>r.farmId))],status:ex.status,err:{}}:{id:'new',biz:'',org:'',name:'',ext:'',lat:'',lng:'',area:'',desc:'',sdgs:[],practices:[],loc:'',farms:[],status:'Draft',err:{}};
+ const b=byId(DB.businesses,PF.biz);
+ const E=k=>PF.err[k]?`<div class="err">${PF.err[k]}</div>`:'';
+ return `<div class="crumb"><a href="${id?'#/projects/'+id:'#/projects'}" class="icb">${I.back}</a>${id?'Edit Project':'Create Project'}<span style="margin-left:auto;display:flex;gap:8px"><select data-pf="status" style="width:auto">${['Draft','Active'].map(s=>`<option ${PF.status===s?'selected':''}>${s}</option>`).join('')}</select><button class="btn pri" data-a="pfSave">${id?'Save changes':'Create Project'}</button></span></div>
+ <div class="tabs"><button class="on">Project Details</button><button data-a="nyi">Assets</button><button data-a="nyi">Documents</button><button data-a="nyi">Images</button><button data-a="nyi">Import JSON</button></div>
+ <div class="card"><h2>Project Information</h2><p class="sub">Enter the basic details for your project. You can configure assets in the Assets tab.</p>
+ <div class="field"><label>Business *</label><div class="hint">Select the business that owns this project.</div><select data-pf="biz"><option value="">Search for a business...</option>${DB.businesses.filter(x=>x.type==='Project Developer').map(x=>`<option value="${x.id}" ${x.id===PF.biz?'selected':''}>${esc(x.name)}</option>`).join('')}</select>${E('biz')}</div>
+ <div class="field"><label>Organization *</label><div class="hint">Select the organization that owns this project.</div><select data-pf="org" ${b?'':'disabled'}><option value="">${b?'Select organization':'Select business first'}</option>${(b?.orgs||[]).map(o=>`<option value="${o.id}" ${o.id===PF.org?'selected':''}>${esc(o.name)}</option>`).join('')}</select>${E('org')}</div>
+ <div class="field"><label>Name *</label><input type="text" data-pf="name" placeholder="Enter project name" value="${esc(PF.name)}">${E('name')}</div>
+ <div class="field"><label>External Reference</label><div class="hint">An external ID or reference for this project (e.g., from a registry).</div><input type="text" data-pf="ext" placeholder="e.g. REG-12345" value="${esc(PF.ext)}"></div>
+ <div class="field"><label>Location label</label><input type="text" data-pf="loc" placeholder="e.g. Úbeda, Jaén, España" value="${esc(PF.loc)}"></div>
+ <div class="row2"><div class="field"><label>Latitude</label><input type="number" step="any" data-pf="lat" placeholder="e.g. 40.7128" value="${PF.lat}"></div><div class="field"><label>Longitude</label><input type="number" step="any" data-pf="lng" placeholder="e.g. -74.0060" value="${PF.lng}"></div></div>
+ <div class="field"><label>Total Area</label><div class="hint">Total area of the project in hectares.</div><input type="number" data-pf="area" placeholder="e.g. 1500" value="${PF.area}"></div>
+ <div class="field"><label>Farms</label><div class="hint">Fields from these farms become rows in the issuance plan.</div>${b?DB.farms.filter(f=>f.businessId===b.id).map(f=>`<label style="display:inline-flex;gap:6px;margin-right:14px;font-weight:400"><input type="checkbox" data-pfarm="${f.id}" ${PF.farms.includes(f.id)?'checked':''}> ${esc(f.name)} <span class="small">(${f.fields.length} fields)</span></label>`).join('')||'<span class="small">This business has no farms.</span>':'<span class="small">Select business first</span>'}</div>
+ <div class="field"><label>Description</label><div class="hint">A brief description of the project and its goals.</div><textarea data-pf="desc">${esc(PF.desc)}</textarea></div>
+ <div class="field"><label>SDGs impacted *</label><div class="hint">Select one or more UN Sustainable Development Goals impacted by this project.</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px">${SDGS.map(([n,l,c])=>`<div class="opt ${PF.sdgs.includes(n)?'on':''}" data-a="pfSdg" data-k="${n}" style="padding:8px"><span class="sdg" style="background:${c};width:30px;height:30px;opacity:${PF.sdgs.includes(n)?1:.45}">${n}</span><span style="display:block">SDG ${n} – ${l}</span></div>`).join('')}</div>${E('sdgs')}</div>
+ <div class="field"><label>Practices</label><div class="hint">Select one or more practices implemented in this project.</div>${PRACTICES.map(x=>`<label style="display:inline-flex;gap:6px;margin:0 14px 6px 0;font-weight:400"><input type="checkbox" data-pprac="${esc(x)}" ${PF.practices.includes(x)?'checked':''}> ${esc(x)}</label>`).join('')}</div></div>`;
+}
+function pfSave(){
+ PF.err={};
+ if(!PF.biz)PF.err.biz='Business is required.'; if(!PF.org)PF.err.org='Organization is required.'; if(!PF.name.trim())PF.err.name='Name is required.'; if(!PF.sdgs.length)PF.err.sdgs='Select at least one SDG.';
+ if(Object.keys(PF.err).length){render();return}
+ const fieldRefs=PF.farms.flatMap(fid=>byId(DB.farms,fid).fields.map(fl=>({farmId:fid,code:fl.code})));
+ const data={businessId:PF.biz,orgId:PF.org,name:PF.name.trim(),extRef:PF.ext.trim(),location:PF.loc||'—',lat:Number(PF.lat)||0,lng:Number(PF.lng)||0,areaHa:Number(PF.area)||0,description:PF.desc,sdgs:PF.sdgs,practices:PF.practices,status:PF.status,fieldRefs,updatedAt:new Date().toISOString()};
+ let id=PF.id;
+ if(id==='new'){id=uid('proj');DB.projects.push({id,...data,farmers:PF.farms.length,methodology:'Trinity NCM V1.1',coBenefits:[],documents:[],createdAt:data.updatedAt,isTest:false})}
+ else Object.assign(byId(DB.projects,id),data);
+ PF=null;toast('Project saved');go('#/projects/'+id);
+}
+
+/* ================= users ================= */
+function vUsers(){
+ return `<div class="crumb">Users</div><div class="head"><div><h1>Manage Users</h1><p class="sub">View and manage all registered users in the system.</p></div><button class="btn pri" data-a="userForm">${I.plus.replace('<svg','<svg width="14"')} Create New User</button></div>
+ ${searchBox('usr','Search name or email')}${paged('users',DB.users.filter(u=>match('usr',u.name,u.email,u.role)).sort((a,b)=>a.role===b.role?a.createdAt.localeCompare(b.createdAt):a.role==='Admin'?-1:1),[
+  {h:'Name',r:u=>esc(u.name)},{h:'Email',r:u=>esc(u.email)},{h:'Role',r:u=>u.role},{h:'Created At',r:u=>fD(u.createdAt)},
+  {h:'',cls:'act',r:u=>ib(I.edit,'Edit user','userForm',`data-id="${u.id}"`)+(u.id===DB.currentUserId?'':ib(I.trash,'Delete user','delUser',`data-id="${u.id}"`,'dan'))}])}`;
+}
+function userForm(id){
+ const u=id?byId(DB.users,id):{name:'',email:'',role:'Business User',businessId:''};
+ modal(`<h3>${id?'Edit user':'Create New User'}</h3><p class="sub">Users can sign in to the registry. Business users act for one business.</p>
+ <div class="field"><label>Name *</label><input type="text" id="uName" value="${esc(u.name)}"></div>
+ <div class="field"><label>Email *</label><input type="email" id="uEmail" value="${esc(u.email)}"></div>
+ <div class="row2"><div class="field"><label>Role</label><select id="uRole">${['Admin','Business User'].map(r=>`<option ${u.role===r?'selected':''}>${r}</option>`).join('')}</select></div>
+ <div class="field"><label>Business</label><select id="uBiz"><option value="">None</option>${DB.businesses.map(b=>`<option value="${b.id}" ${b.id===u.businessId?'selected':''}>${esc(b.name)}</option>`).join('')}</select></div></div><div class="err" id="uErr"></div>
+ <div class="dlgfoot"><button class="btn" data-a="close">Cancel</button><button class="btn pri" data-a="userSave" data-id="${id||''}">Save</button></div>`);
+}
+
+/* ================= simple create dialogs ================= */
+function bizForm(){modal(`<h3>Create Business</h3><div class="field"><label>Name *</label><input type="text" id="bName"></div><div class="field"><label>External Reference *</label><input type="text" id="bExt" placeholder="e.g. BUY-0020"></div><div class="field"><label>Type</label><select id="bType"><option>Buyer</option><option>Project Developer</option></select></div><div class="err" id="bErr"></div><div class="dlgfoot"><button class="btn" data-a="close">Cancel</button><button class="btn pri" data-a="bizSave">Create</button></div>`)}
+function farmForm(){modal(`<h3>Create Farm</h3><div class="field"><label>Owner business *</label><select id="fBiz">${DB.businesses.filter(b=>b.type==='Project Developer').map(b=>`<option value="${b.id}">${esc(b.name)}</option>`).join('')}</select></div><div class="field"><label>Name *</label><input type="text" id="fName"></div><div class="field"><label>External Reference</label><input type="text" id="fExt"></div><div class="field"><label>Number of fields</label><input type="number" id="fN" value="2" min="0"></div><div class="err" id="fErr"></div><div class="dlgfoot"><button class="btn" data-a="close">Cancel</button><button class="btn pri" data-a="farmSave">Create</button></div>`)}
+
+/* ================= findings & checks =================
+   Not rendered in the replica. NCM/export-board.mjs reads FINDINGS and checks()
+   and writes them to the findings kanban (NCM/findings-board.html). */
+const FINDINGS=[
+ {t:'Test data lives in the production registry',sev:'hi',ver:true,area:'Data integrity',obs:'Live registry lists "Sample Project" (Fusuma, located "Al Wahat, Libia"), farm "FARM TEST" and asset IDs like PROJ_001:TEST_001 as Active alongside real credits, with 1,140 tCO2e issued.',imp:'Buyers and auditors can see or transact against test units. Add an environment flag or sandbox tenant, block test assets from Transfer/Retire, and purge or archive.',link:'#/projects'},
+ {t:'Issue order amount does not match tokens issued',sev:'hi',ver:true,area:'Ledger',obs:'Sample Project: issue operation shows +1,200 but its assets sum to 1,140 (200+300+100+200+240+100). The "Cultiva Carbono ... Hnos. Andrada-Vanderwilde" project shows 563 issued, which matches none of the four BALAM issue operations (+441, +1,213, +714, +641).',imp:'Headline order amount appears to be stored separately from asset lines. Derive it from lines, or add a reconciliation check that blocks mismatches. Mapping of issue operations to projects also needs to be visible in the operations list.',link:'#/operations'},
+ {t:'Certification not linked to issuance operations',sev:'hi',ver:true,area:'Evidence',obs:'Add tokens requires at least one PDF, yet all 2026 issue operations show "—" in Attachments and Sample Project has "No documents yet".',imp:'The evidence chain from verification statement to units breaks at the record level. Store the certificate on the issue operation and surface it in Documents.',link:'#/operations'},
+ {t:'Duplicate buyer entities',sev:'med',ver:true,area:'Master data',obs:'"TARAJE NUEVO S COOP AND" and "TARAJE NUEVO S.COOP AND." exist as separate businesses. The Create Operation target dropdown lists "Colegio Oficial de Ópticos-Optometristas de Andalucía" twice.',imp:'Retirement and holdings reports can split one beneficiary across two wallets. Add a tax ID (CIF/VAT) as unique key, fuzzy duplicate warning on create, and a merge tool.',link:'#/businesses'},
+ {t:'External reference has no consistent format',sev:'lo',ver:true,area:'Master data',obs:'Values mix codes (BALAM-0001), migration slugs (mig-picus), full legal names (Productos del campo ANRO S.L.) and upper-snake names (TARAJE_NUEVO_S_COOP_AND).',imp:'Define one pattern per entity and validate on input; keep migration IDs in a separate legacy field.',link:'#/businesses'},
+ {t:'Project attributes contradict the description',sev:'med',ver:true,area:'Project data',obs:'Hnos. Andrada-Vanderwilde shows Total area 0 hectares and Farmers 1 "cooperatives", while the description names four growers (CC0010, CC0015, CC0017, CC0019).',imp:'Area and farmer counts are public claims. Derive them from registered farms/fields, and fix the unit label ("cooperatives" for a farmer count).',link:'#/projects'},
+ {t:'Sign convention differs by operation type',sev:'lo',ver:true,area:'Operations UX',obs:'Issue shows +641, Retire shows -2, Transfer shows 13 in red with no sign. Asset type column stacks several chips per row.',imp:'Show signed flow relative to the viewed wallet, or split into "Quantity" plus a direction icon.',link:'#/operations'},
+ {t:'Pending workflow is unused',sev:'med',ver:true,area:'Controls',obs:'All 20 operations are Done with Issued At equal to Completed At to the second. Pending (0), Cancelled (0).',imp:'There is no maker-checker step before units move. Enforce Pending plus a second approver for transfers and retirements above a threshold.',link:'#/operations?status=pending'},
+ {t:'Signed-in user shows as "User" after navigation',sev:'lo',ver:true,area:'UI bug',obs:'Sidebar footer showed "Kiera Holland" on Users, then "User" with avatar "U" on Businesses, Farms, Projects and Operations.',imp:'Session profile is not loaded on client-side route changes.',link:'#/users'},
+ {t:'Tables overflow at laptop width',sev:'lo',ver:true,area:'UI bug',obs:'At about 1,250 px the Projects table clips the action column and the "Create Project" button; Operations clips Completed At and Attachments.',imp:'Truncate long names with tooltips, hide secondary date columns below a breakpoint, or make the actions column sticky.',link:'#/projects'},
+ {t:'No search or filters on any list',sev:'med',ver:true,area:'Operations UX',obs:'Lists only offer pagination; Operations only has status tabs. No filter by project, business, type, vintage or date.',imp:'Needed once volume grows past a few pages. Replica adds a search box on each list to test the pattern.',link:'#/operations'},
+ {t:'Users list omits business association',sev:'lo',ver:true,area:'Access',obs:'Columns are Name, Email, Role, Created At. Names are truncated (e.g. "JEF PROPERTIES S").',imp:'Admins cannot see which wallet a user can act for. Add Business column and last sign-in.',link:'#/users'},
+ {t:'Vintage rule blocks back-filling missed years',sev:'med',ver:false,area:'Issuance',obs:'Add tokens allows only vintages later than the max already issued ("Allowed vintage years: 2022–2026 (max already issued: 2021)").',imp:'Inferred: a late-verified earlier vintage cannot be added without a workaround. Validate against a per-project monitoring schedule instead.',link:'#/projects'},
+ {t:'Wallet shows only non-zero types; retired totals absent',sev:'lo',ver:false,area:'Reporting',obs:'BALAM wallet shows RMV 3,478 only, with no view of issued, transferred or retired units per project.',imp:'Inferred: for a claims platform, retired-on-behalf-of totals per beneficiary are the key output. Replica wallet adds a retired total.',link:'#/businesses'},
+ {t:'Buyer details have no address',sev:'med',ver:true,req:true,area:'Master data',obs:'Create Business asks only for Name, External Reference and Type. The Details tab shows name, reference and default organization; there is no registered address or tax ID anywhere on a business.',imp:'Retirement certificates, invoices and beneficiary claims need the legal name and registered address. Add registered address (street, city, postcode, country) and tax ID at creation, show them on Details, and print them on the public retirement certificate.',link:'#/businesses'},
+ {t:'No guided flow from new business to its first user',sev:'med',ver:true,req:true,area:'Onboarding',obs:'Creating a business and adding its users happen on separate screens with no link between them. The Users list has no business column (F12) and the replica check finds a Business User with no business.',imp:'Make it one flow: 1 Create business, 2 Address and tax ID, 3 Invite users by email with a role, 4 Review. Show invite status (sent, accepted) on the business, and warn before a business with no active user is used as a transfer target.',link:'#/businesses'},
+];
+function checks(){
+ const L=ledger(); const out=[];
+ const norm=s=>s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'');
+ const g={};DB.businesses.forEach(b=>{(g[norm(b.name)]??=[]).push(b)});
+ const dups=Object.values(g).filter(x=>x.length>1);
+ out.push({n:'Duplicate business names (normalised)',c:dups.length,d:dups.map(x=>x.map(b=>`<a href="#/businesses/${b.id}">${esc(b.name)}</a>`).join(' = ')).join('<br>')});
+ const mism=DB.operations.filter(o=>o.type==='Issue'&&o.declared!=null&&o.declared!==opTotal(o));
+ out.push({n:'Issue operations where order amount ≠ asset lines',c:mism.length,d:mism.map(o=>`<a href="javascript:void 0" data-a="opView" data-id="${o.id}">${o.id}</a> (${o.declared} vs ${opTotal(o)})`).join('<br>')});
+ const nocert=DB.operations.filter(o=>o.type==='Issue'&&o.status==='Done'&&!o.attachments.some(f=>/\.pdf$/i.test(f)));
+ out.push({n:'Issue operations without a certificate PDF',c:nocert.length,d:nocert.map(o=>`<a href="#/projects/${o.projectId}?tab=documents">${esc(byId(DB.projects,o.projectId)?.name)}</a>`).join('<br>')});
+ const zero=DB.projects.filter(p=>p.status==='Active'&&!p.areaHa);
+ out.push({n:'Active projects with 0 ha area',c:zero.length,d:zero.map(p=>`<a href="#/projects/${p.id}">${esc(p.name)}</a>`).join('<br>')});
+ const tst=DB.projects.filter(p=>p.isTest||/test|sample|demo/i.test(p.name+' '+bizName(p.businessId)));
+ out.push({n:'Test or demo projects in registry',c:tst.length,d:tst.map(p=>`<a href="#/projects/${p.id}">${esc(p.name)}</a>`).join('<br>')});
+ const neg=[];DB.assets.forEach(a=>Object.entries(L.hold[a.id]||{}).forEach(([b,n])=>{if(n<0)neg.push(`${a.id} @ ${esc(bizName(b))}: ${n}`)}));
+ out.push({n:'Negative balances',c:neg.length,d:neg.join('<br>')});
+ const over=[];DB.assets.forEach(a=>Object.entries(L.reserved[a.id]||{}).forEach(([b,n])=>{if(n>L.held(a.id,b))over.push(`${a.id} @ ${esc(bizName(b))}`)}));
+ out.push({n:'Pending orders exceeding holdings',c:over.length,d:over.join('<br>')});
+ const orphan=DB.farms.filter(f=>!DB.projects.some(p=>p.fieldRefs.some(r=>r.farmId===f.id)));
+ out.push({n:'Farms not used in any project',c:orphan.length,d:orphan.map(f=>`<a href="#/farms/${f.id}">${esc(f.name)}</a>`).join('<br>')});
+ const noBiz=DB.users.filter(u=>u.role==='Business User'&&!u.businessId);
+ out.push({n:'Business users with no business',c:noBiz.length,d:noBiz.map(u=>esc(u.name+' · '+u.email)).join('<br>')});
+ const styles={};DB.businesses.forEach(b=>{const s=/^mig-/.test(b.extRef)?'mig-slug':/^[A-Z]{2,5}-\d+$/.test(b.extRef)?'CODE-0000':/\s/.test(b.extRef)?'legal name':/_/.test(b.extRef)?'UPPER_SNAKE':'other';styles[s]=(styles[s]||0)+1});
+ out.push({n:'External reference formats in use',c:Object.keys(styles).length,d:Object.entries(styles).map(([k,v])=>`${k}: ${v}`).join(' · '),info:true});
+ return out;
+}
+/* ================= events ================= */
+document.addEventListener('click',e=>{
+ const pg=e.target.closest('[data-pg]'); if(pg&&!pg.disabled){const [k,n]=pg.dataset.pg.split(':');UI.pages[k]=+n;render();return}
+ const g=e.target.closest('[data-go]'); if(g){go(g.dataset.go);return}
+ const el=e.target.closest('[data-a]'); if(!el) return;
+ const a=el.dataset.a, id=el.dataset.id, k=el.dataset.k;
+ if(a==='closeov'&&e.target!==el) return;
+ const H={
+  close:()=>closeModal(), closeov:()=>closeModal(),
+  copy:()=>copy(id),
+  collapse:()=>document.getElementById('side').classList.toggle('col'),
+  nyi:()=>toast('Tab not replicated. Configure assets via Add tokens.'),
+  share:()=>copy(location.href.split('#')[0]+'#/projects/'+id),
+  export:()=>{const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});const u=URL.createObjectURL(blob);const l=document.createElement('a');l.href=u;l.download='registry-replica-data.json';l.click();URL.revokeObjectURL(u)},
+  import:()=>document.getElementById('importFile').click(),
+  reset:()=>confirmDlg('Reset test data','Replace all data in this tab with the original seeded test data?',()=>{DB=seed();CO=MT=PF=null;UI.pages={};render();toast('Test data reset')},'Reset'),
+  newBiz:bizForm, newFarm:farmForm,
+  bizSave:()=>{const n=document.getElementById('bName').value.trim(),x=document.getElementById('bExt').value.trim();if(!n||!x){document.getElementById('bErr').textContent='Name and external reference are required.';return}const now=new Date().toISOString();DB.businesses.unshift({id:uid('biz'),name:n,extRef:x,type:document.getElementById('bType').value,createdAt:now,updatedAt:now,orgs:[{id:uid('org'),name:n+" Default's Organization",isDefault:true,createdAt:now}]});closeModal();render();toast('Business created')},
+  farmSave:()=>{const n=document.getElementById('fName').value.trim();if(!n){document.getElementById('fErr').textContent='Name is required.';return}const now=new Date().toISOString();const c=Math.max(0,+document.getElementById('fN').value||0);DB.farms.unshift({id:uid('farm'),name:n,extRef:document.getElementById('fExt').value.trim()||'—',businessId:document.getElementById('fBiz').value,createdAt:now,updatedAt:now,fields:Array.from({length:c},(_,i)=>({code:'FIELD-'+String(i+1).padStart(3,'0'),areaHa:50}))});closeModal();render();toast('Farm created')},
+  addField:()=>{const f=byId(DB.farms,id);f.fields.push({code:'FIELD-'+String(f.fields.length+1).padStart(3,'0'),areaHa:50});f.updatedAt=new Date().toISOString();render()},
+  delBiz:()=>{const b=byId(DB.businesses,id);const used=DB.projects.some(p=>p.businessId===id)||DB.operations.some(o=>o.targetBusinessId===id||o.fromBusinessId===id);confirmDlg('Delete business',used?`<b>${esc(b.name)}</b> has projects or operations. The live registry's behaviour here is unknown; the replica blocks it.`:`Delete <b>${esc(b.name)}</b>?`,()=>{if(used){toast('Blocked: business has ledger history');return}DB.businesses=DB.businesses.filter(x=>x.id!==id);render()},used?'OK':'Delete')},
+  delFarm:()=>{const f=byId(DB.farms,id);const used=DB.projects.some(p=>p.fieldRefs.some(r=>r.farmId===id));confirmDlg('Delete farm',used?`<b>${esc(f.name)}</b> is used by a project and cannot be deleted in the replica.`:`Delete <b>${esc(f.name)}</b>?`,()=>{if(used)return;DB.farms=DB.farms.filter(x=>x.id!==id);render()},used?'OK':'Delete')},
+  delProj:()=>{const p=byId(DB.projects,id);const used=DB.operations.some(o=>o.projectId===id);confirmDlg('Delete project',used?`<b>${esc(p.name)}</b> has issued units and cannot be deleted in the replica.`:`Delete <b>${esc(p.name)}</b>?`,()=>{if(used)return;DB.projects=DB.projects.filter(x=>x.id!==id);render()},used?'OK':'Delete')},
+  delUser:()=>{const u=byId(DB.users,id);confirmDlg('Delete user',`Delete <b>${esc(u.name)}</b>?`,()=>{DB.users=DB.users.filter(x=>x.id!==id);render()})},
+  newOrg:()=>{const b=byId(DB.businesses,id);modal(`<h3>Add organization</h3><div class="field"><label>Name</label><input type="text" id="oName"></div><div class="dlgfoot"><button class="btn" data-a="close">Cancel</button><button class="btn pri" id="oSave">Add</button></div>`);document.getElementById('oSave').onclick=()=>{const n=document.getElementById('oName').value.trim();if(!n)return;b.orgs.push({id:uid('org'),name:n,isDefault:false,createdAt:new Date().toISOString()});closeModal();render()}},
+  editOrg:()=>{const o=byId(DB.businesses,id).orgs.find(x=>x.id===el.dataset.org);modal(`<h3>Edit organization</h3><div class="field"><label>Name</label><input type="text" id="oName" value="${esc(o.name)}"></div><div class="dlgfoot"><button class="btn" data-a="close">Cancel</button><button class="btn pri" id="oSave">Save</button></div>`);document.getElementById('oSave').onclick=()=>{o.name=document.getElementById('oName').value.trim()||o.name;closeModal();render()}},
+  delOrg:()=>{const b=byId(DB.businesses,id);confirmDlg('Delete organization','Delete this organization?',()=>{b.orgs=b.orgs.filter(x=>x.id!==el.dataset.org);render()})},
+  opView:()=>opView(id), opMenu:()=>opView(id),
+  opIssue:()=>{const o=byId(DB.operations,id);const L=ledger();const short=o.lines.find(l=>L.held(l.assetId,o.fromBusinessId)<l.amount);if(short){toast('Insufficient balance to complete');return}o.status='Done';o.completedAt=new Date().toISOString();closeModal();render();toast('Operation issued')},
+  opCancel:()=>{const o=byId(DB.operations,id);o.status='Cancelled';o.completedAt=new Date().toISOString();closeModal();render();toast('Operation cancelled')},
+  coType:()=>{CO.type=k;render()}, coMethod:()=>{CO.method=k;CO.amt={};CO.err={};render()},
+  coMax:()=>{CO.amt[k]=el.dataset.max;render()}, coSubmit:()=>coSubmit(),
+  mtMode:()=>{MT.mode=k;render()}, mtCell:()=>mtCell(k),
+  mtYear:()=>{const maxIssued=Math.max(0,...projAssets(MT.pid).map(a=>a.vintage));const min=maxIssued?maxIssued+1:2020;for(let y=2026;y>=min;y--){if(!MT.years.includes(y)){MT.years.push(y);MT.years.sort();break}}render()},
+  mtDelYear:()=>{MT.years=MT.years.filter(y=>y!=k);Object.keys(MT.vals).forEach(x=>{if(x.endsWith('|'+k))delete MT.vals[x]});render()},
+  mtClear:()=>{MT.vals={};render()},
+  mtIssue:()=>{if(!MT.issuer||!MT.certId||!MT.certAt){MT.err='Certificate issuer, ID and date are required.';render();return}mtIssue()},
+  cellClear:()=>document.querySelectorAll('[data-cell]').forEach(i=>i.value=''),
+  cellSave:()=>{const v={};document.querySelectorAll('[data-cell]').forEach(i=>{if(Number(i.value)>0)v[i.dataset.cell]=Math.floor(Number(i.value))});MT.vals[k]=v;closeModal();render()},
+  pfSave:()=>pfSave(), pfSdg:()=>{const n=+k;PF.sdgs=PF.sdgs.includes(n)?PF.sdgs.filter(x=>x!==n):[...PF.sdgs,n];render()},
+  userForm:()=>userForm(id),
+  userSave:()=>{const n=document.getElementById('uName').value.trim(),em=document.getElementById('uEmail').value.trim();if(!n||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){document.getElementById('uErr').textContent='Name and a valid email are required.';return}if(DB.users.some(u=>u.email.toLowerCase()===em.toLowerCase()&&u.id!==id)){document.getElementById('uErr').textContent='A user with this email already exists.';return}const data={name:n,email:em,role:document.getElementById('uRole').value,businessId:document.getElementById('uBiz').value||null};if(id)Object.assign(byId(DB.users,id),data);else DB.users.push({id:uid('usr'),...data,createdAt:new Date().toISOString()});closeModal();render();toast('User saved')},
+ };
+ if(H[a]){e.preventDefault();H[a]()}
+});
+document.addEventListener('input',e=>{
+ const t=e.target;
+ if(t.dataset.q!==undefined){UI.q[t.dataset.q]=t.value;Object.keys(UI.pages).forEach(k=>UI.pages[k]=1);const pos=t.selectionStart;AFTER=()=>{const n=document.querySelector(`[data-q="${t.dataset.q}"]`);if(n){n.focus();n.setSelectionRange(pos,pos)}};render();return}
+ if(t.dataset.co&&CO&&t.type!=='file'){const [f,key]=t.dataset.co.split(':');if(key)CO[f][key]=t.value;else CO[f]=t.value;if(f==='amt'){const btn=document.querySelector('[data-a="coSubmit"]');const tot=sum(Object.values(CO.amt).map(Number).filter(n=>n>0));if(btn){btn.disabled=!tot;btn.textContent=`Create Operation (${fN(tot)} tokens)`}}}
+ if(t.dataset.mt&&MT&&t.type!=='file') MT[t.dataset.mt]=t.value;
+ if(t.dataset.pf&&PF&&t.tagName!=='SELECT') PF[t.dataset.pf]=t.value;
+});
+document.addEventListener('change',e=>{
+ const t=e.target;
+ if(t.dataset.per){UI.per[t.dataset.per]=+t.value;UI.pages[t.dataset.per]=1;render();return}
+ if(t.dataset.a==='coPick'&&t.value){go('#/operations/create?projectId='+t.value);return}
+ if(t.dataset.lang!==undefined){toast('Spanish UI strings are not included in the replica');t.value='🇬🇧 EN';return}
+ if(t.dataset.co==='files'){CO.files=[...CO.files,...[...t.files].map(f=>f.name)].slice(0,10);render();return}
+ if(t.dataset.co==='from'||t.dataset.co==='target'||(t.dataset.co||'').startsWith('cur:')){const [f,key]=t.dataset.co.split(':');if(key)CO[f][key]=t.value;else CO[f]=t.value;if(f==='from'){CO.amt={};CO.target=CO.target===t.value?'':CO.target}render();return}
+ if(t.dataset.mt==='files'){MT.files=[...MT.files,...[...t.files].map(f=>f.name)];MT.err='';render();return}
+ if(t.dataset.pf==='biz'){PF.biz=t.value;PF.org=byId(DB.businesses,t.value)?.orgs.find(o=>o.isDefault)?.id||'';PF.farms=[];render();return}
+ if(t.dataset.pf==='org'||t.dataset.pf==='status'){PF[t.dataset.pf]=t.value;return}
+ if(t.dataset.pfarm){PF.farms=t.checked?[...PF.farms,t.dataset.pfarm]:PF.farms.filter(x=>x!==t.dataset.pfarm);return}
+ if(t.dataset.pprac){PF.practices=t.checked?[...PF.practices,t.dataset.pprac]:PF.practices.filter(x=>x!==t.dataset.pprac);return}
+ if(t.id==='importFile'&&t.files[0]){t.files[0].text().then(s=>{try{const d=JSON.parse(s);if(!d.businesses||!d.operations)throw 0;DB=d;CO=MT=PF=null;render();toast('Data imported')}catch{toast('Not a replica export file')}t.value=''})}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+window.addEventListener('hashchange',()=>{window.scrollTo(0,0);render()});
+render();
+</script>
+</body>
+</html>
