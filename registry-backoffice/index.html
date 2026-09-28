@@ -1,0 +1,423 @@
+<title>Registry Back Office</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#f3f5f4; --surface:#ffffff; --surface-2:#eef1f0; --line:#d9dfdc; --line-soft:#e7ebe9;
+  --ink:#17201d; --ink-2:#4a5752; --ink-3:#76827d;
+  --accent:#1d5c4f; --accent-soft:#dcebe6; --accent-ink:#ffffff;
+  --ok:#237a45; --ok-bg:#e1f2e6; --warn:#8a5a00; --warn-bg:#fbefd4; --bad:#a3302a; --bad-bg:#f8e1df; --info:#2d4f8f; --info-bg:#e2e9f6;
+  --note:#b3541e; --note-bg:#fdebdc;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#101513; --surface:#171d1b; --surface-2:#1e2522; --line:#2c3531; --line-soft:#232b28;
+    --ink:#e6ece9; --ink-2:#aab6b1; --ink-3:#7c8984;
+    --accent:#6cc2ab; --accent-soft:#1f3a33; --accent-ink:#0d1a16;
+    --ok:#7fd49b; --ok-bg:#1c3325; --warn:#f0c064; --warn-bg:#3a2e14; --bad:#f08e86; --bad-bg:#3d1f1d; --info:#9db8ec; --info-bg:#1d2a44;
+    --note:#f4a26e; --note-bg:#3b2718;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#101513; --surface:#171d1b; --surface-2:#1e2522; --line:#2c3531; --line-soft:#232b28;
+  --ink:#e6ece9; --ink-2:#aab6b1; --ink-3:#7c8984;
+  --accent:#6cc2ab; --accent-soft:#1f3a33; --accent-ink:#0d1a16;
+  --ok:#7fd49b; --ok-bg:#1c3325; --warn:#f0c064; --warn-bg:#3a2e14; --bad:#f08e86; --bad-bg:#3d1f1d; --info:#9db8ec; --info-bg:#1d2a44;
+  --note:#f4a26e; --note-bg:#3b2718;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:14px/1.45 var(--sans);}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+/* sidebar */
+.side{background:var(--surface);border-right:1px solid var(--line);padding:18px 12px;display:flex;flex-direction:column;gap:18px;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:10px;padding:0 8px}
+.brand-mark{width:28px;height:28px;border-radius:6px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:600;font-size:13px}
+.brand b{display:block;font-size:14px}
+.brand span{font-size:11px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav-label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);padding:10px 10px 4px}
+.nav button{all:unset;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-radius:6px;color:var(--ink-2)}
+.nav button:hover{background:var(--surface-2);color:var(--ink)}
+.nav button[aria-current="page"]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.nav button:focus-visible{outline:2px solid var(--accent)}
+.nav .count{font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.side-foot{margin-top:auto;font-size:12px;color:var(--ink-3);padding:0 10px}
+/* main */
+.main{min-width:0;display:flex;flex-direction:column}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 28px;border-bottom:1px solid var(--line);background:var(--surface);position:sticky;top:env(safe-area-inset-top,0px);z-index:5;flex-wrap:wrap}
+.crumbs{color:var(--ink-3);font-size:13px}
+.crumbs b{color:var(--ink);font-weight:500}
+.top-right{display:flex;align-items:center;gap:10px}
+.toggle{display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);cursor:pointer;font-size:13px}
+.toggle[aria-pressed="true"]{border-color:var(--note);color:var(--note);background:var(--note-bg)}
+.avatar{width:30px;height:30px;border-radius:50%;background:var(--surface-2);border:1px solid var(--line);display:grid;place-items:center;font-size:12px;font-weight:600;color:var(--ink-2)}
+.content{padding:24px 28px 48px;display:flex;flex-direction:column;gap:18px}
+.banner{font-size:12.5px;color:var(--ink-2);background:var(--surface-2);border:1px dashed var(--line);border-radius:6px;padding:8px 12px}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+h1{font-size:22px;font-weight:600;margin:0;text-wrap:balance}
+.sub{color:var(--ink-3);margin:2px 0 0;font-size:13px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:7px 12px;cursor:pointer;font-weight:500}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.danger{color:var(--bad)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.stat .k{font-size:12px;color:var(--ink-3)}
+.stat .v{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+.stat .d{font-size:12px;color:var(--ink-3)}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.search{flex:1 1 240px;display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:0 10px}
+.search input{border:0;background:transparent;padding:7px 0;width:100%;outline:none}
+select{border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:7px 8px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:820px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line-soft);white-space:nowrap}
+th{font-size:11.5px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;background:var(--surface-2);cursor:pointer;user-select:none}
+th[data-sort]::after{content:" \2195";opacity:.35}
+th.asc::after{content:" \2191";opacity:1}
+th.desc::after{content:" \2193";opacity:1}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--surface-2)}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+.mono{font-family:var(--mono);font-size:12.5px}
+.who b{display:block;font-weight:500}
+.who span{color:var(--ink-3);font-size:12.5px}
+.pill{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px}
+.p-ok{background:var(--ok-bg);color:var(--ok)}.p-warn{background:var(--warn-bg);color:var(--warn)}.p-bad{background:var(--bad-bg);color:var(--bad)}.p-info{background:var(--info-bg);color:var(--info)}.p-mute{background:var(--surface-2);color:var(--ink-2)}
+.tag{font-size:12px;color:var(--ink-2);border:1px solid var(--line);border-radius:4px;padding:1px 6px}
+.pager{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;color:var(--ink-3);font-size:13px;gap:8px;flex-wrap:wrap}
+.empty{padding:40px;text-align:center;color:var(--ink-3)}
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(10,16,14,.35);z-index:20}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(460px,100%);background:var(--surface);border-left:1px solid var(--line);z-index:21;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.drawer header{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px}
+.drawer h2{margin:0;font-size:18px}
+.drawer .body{padding:18px 20px;overflow:auto;display:flex;flex-direction:column;gap:18px}
+.dl{display:grid;grid-template-columns:130px 1fr;gap:8px 12px;margin:0}
+.dl dt{color:var(--ink-3);font-size:13px}
+.dl dd{margin:0}
+.sect-t{font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin:0 0 8px}
+.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;font-size:13px}
+.log li{display:flex;gap:10px}
+.log time{color:var(--ink-3);font-variant-numeric:tabular-nums;min-width:86px}
+.x{all:unset;cursor:pointer;width:28px;height:28px;display:grid;place-items:center;border-radius:6px;color:var(--ink-3)}
+.x:hover{background:var(--surface-2)}
+/* modal */
+.modal{position:fixed;inset:0;display:grid;place-items:center;z-index:30;padding:16px}
+.modal form{background:var(--surface);border:1px solid var(--line);border-radius:10px;width:min(440px,100%);padding:20px;display:flex;flex-direction:column;gap:12px}
+.modal label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--ink-2)}
+.modal input,.modal select{border:1px solid var(--line);border-radius:6px;padding:8px;background:var(--surface)}
+.toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:6px;z-index:40;font-size:13px}
+/* review notes */
+.note{display:none}
+.review .note{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--note);color:#fff;font-size:11px;font-weight:600;margin-left:6px;vertical-align:middle;cursor:help;flex:none}
+.notes{display:none}
+.review .notes{display:block;background:var(--note-bg);border:1px solid var(--note);border-radius:8px;padding:14px 16px}
+.notes h3{margin:0 0 8px;font-size:14px;color:var(--note)}
+.notes ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;max-width:80ch}
+.notes li b{font-weight:600}
+.notes .src{color:var(--ink-3);font-size:12px}
+@media (max-width:860px){
+  .app{grid-template-columns:1fr}
+  .side{position:static;height:auto;flex-direction:row;align-items:center;overflow-x:auto;padding:10px 16px;border-right:0;border-bottom:1px solid var(--line)}
+  .nav{flex-direction:row}
+  .nav-label,.side-foot,.brand span{display:none}
+  .top{padding:10px 16px}
+  .content{padding:18px 16px 40px}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (prefers-reduced-motion:no-preference){.drawer{animation:slide .18s ease-out}@keyframes slide{from{transform:translateX(24px)}}}
+</style>
+
+<div class="app" id="app">
+  <aside class="side">
+    <div class="brand"><div class="brand-mark">TR</div><div><b>Trinity Registry</b><span>Back office</span></div></div>
+    <nav class="nav" id="nav" aria-label="Back office sections"></nav>
+    <div class="side-foot">Environment: <b>staging replica</b></div>
+  </aside>
+  <div class="main">
+    <div class="top">
+      <div class="crumbs">Back office / <b id="crumb">Users</b></div>
+      <div class="top-right">
+        <button class="toggle" id="reviewBtn" aria-pressed="false">Review notes</button>
+        <div class="avatar" title="Signed in as registry admin">KH</div>
+      </div>
+    </div>
+    <main class="content" id="view"></main>
+  </div>
+</div>
+<div id="layer"></div>
+
+<script>
+(function(){
+/* ---------- sample data (fictional) ---------- */
+const BUSINESSES=[
+  {id:"B-0001",name:"Trinity AgTech",type:"Operator",country:"GB",projects:0},
+  {id:"B-0102",name:"Agrícola Duero SL",type:"Promoter",country:"ES",projects:2},
+  {id:"B-0103",name:"Ferme Beauce Nord",type:"Farmer",country:"FR",projects:1},
+  {id:"B-0104",name:"Castilla Grain Coop",type:"Promoter",country:"ES",projects:1},
+  {id:"B-0201",name:"Northbridge Carbon",type:"Trader",country:"GB",projects:0},
+  {id:"B-0202",name:"Harvest Foods plc",type:"Buyer",country:"GB",projects:0},
+  {id:"B-0203",name:"Vale Dairy Group",type:"Buyer",country:"IE",projects:0},
+  {id:"B-0105",name:"Hof Weidenau",type:"Farmer",country:"DE",projects:1}
+];
+const PEOPLE=[
+ ["Lucía Ortega","B-0102","Owner","Active","2026-09-27 16:42","2025-11-04",true],
+ ["Mateo Rivas","B-0102","Editor","Active","2026-09-22 09:10","2025-11-04",true],
+ ["Camille Durand","B-0103","Owner","Active","2026-09-18 14:03","2026-01-12",true],
+ ["Pierre Lemaire","B-0103","Viewer","Invited","","2026-09-20",false],
+ ["Javier Sanz","B-0104","Owner","Active","2026-08-30 11:26","2026-02-02",true],
+ ["Elena Márquez","B-0104","Editor","Suspended","2026-05-14 08:55","2026-02-02",false],
+ ["Tom Ashworth","B-0201","Owner","Active","2026-09-28 07:31","2025-09-15",true],
+ ["Priya Nair","B-0201","Trader","Active","2026-09-26 17:48","2025-10-01",true],
+ ["Owen Clarke","B-0201","Viewer","Active","2026-07-02 12:00","2026-03-19",false],
+ ["Sarah Whitfield","B-0202","Owner","Active","2026-09-25 10:15","2026-04-07",true],
+ ["Daniel Okafor","B-0202","Viewer","Invited","","2026-09-24",false],
+ ["Aoife Byrne","B-0203","Owner","Active","2026-09-11 13:37","2026-05-21",true],
+ ["Ciarán Walsh","B-0203","Editor","Invited","","2026-09-09",false],
+ ["Jonas Keller","B-0105","Owner","Active","2026-09-03 15:22","2026-06-30",true],
+ ["Lena Vogt","B-0105","Viewer","Active","2026-06-19 09:40","2026-06-30",false],
+ ["Kiera Holland","B-0001","Registry admin","Active","2026-09-28 08:02","2025-06-01",true],
+ ["Sepi Honarmand","B-0001","Registry admin","Active","2026-09-27 18:20","2025-06-01",true],
+ ["Registry Ops","B-0001","Registry admin","Active","2026-09-28 06:00","2025-06-01",false],
+ ["Marta Gil","B-0102","Viewer","Active","2026-04-02 10:11","2025-12-15",false],
+ ["Hugo Bernard","B-0103","Editor","Suspended","2026-03-28 16:05","2026-01-12",false],
+ ["Grace Liu","B-0202","Editor","Active","2026-09-23 14:50","2026-04-07",true],
+ ["Rob Fenwick","B-0201","Trader","Invited","","2026-09-26",false]
+];
+const slug=s=>s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z]+/g,".").replace(/^\.|\.$/g,"");
+const bizById=Object.fromEntries(BUSINESSES.map(b=>[b.id,b]));
+const USERS=PEOPLE.map((p,i)=>{const b=bizById[p[1]];return{
+  id:"U-"+String(1040+i*7).padStart(5,"0"),name:p[0],email:slug(p[0])+"@"+slug(b.name).replace(/\./g,"")+".example",
+  biz:b.id,bizName:b.name,bizType:b.type,role:p[2],status:p[3],last:p[4],created:p[5],mfa:p[6]}});
+
+const PROJECTS=[
+ {id:"RP-0007",ncm:"NCM-2025-014",name:"Duero Cover Crop Programme",biz:"B-0102",status:"Registered",vintages:"2024–2030",fields:38},
+ {id:"RP-0008",ncm:"NCM-2025-021",name:"Tierra de Campos Reduced Tillage",biz:"B-0102",status:"Under validation",vintages:"2025–2031",fields:22},
+ {id:"RP-0011",ncm:"NCM-2026-003",name:"Beauce Nord Soil Carbon",biz:"B-0103",status:"Registered",vintages:"2025–2031",fields:14},
+ {id:"RP-0012",ncm:"NCM-2026-006",name:"Castilla Grain Nitrogen Efficiency",biz:"B-0104",status:"Draft",vintages:"2026–2032",fields:51},
+ {id:"RP-0015",ncm:"NCM-2026-011",name:"Weidenau Grassland Retention",biz:"B-0105",status:"Under validation",vintages:"2026–2030",fields:9}
+];
+const ASSETS=[
+ ["P7_Fa2_Fi11_co2rmv_bio_2024","RP-0007","VCU-RMV","BIO",2024,412.6,15,"Issued"],
+ ["P7_Fa2_Fi11_co2red_bio_2024","RP-0007","VCU-RED","BIO",2024,96.3,0,"Issued"],
+ ["P7_Fa3_Fi02_co2rmv_bio_2024","RP-0007","VCU-RMV","BIO",2024,288.1,15,"Issued"],
+ ["P7_Fa3_Fi02_co2rmv_bio_2025","RP-0007","VCU-RMV","BIO",2025,301.9,15,"Pending verification"],
+ ["P11_Fa1_Fi04_co2rmv_bio_2025","RP-0011","INS-RMV","BIO",2025,154.0,15,"Issued"],
+ ["P11_Fa1_Fi04_co2red_bio_2025","RP-0011","INS-RED","BIO",2025,61.7,0,"Issued"],
+ ["P11_Fa1_Fi07_co2ret_bio_2025","RP-0011","VCU-RET","BIO",2025,220.4,null,"On hold"],
+ ["P7_Fa2_Fi11_co2rmv_bio_2023","RP-0007","VCU-RMV","BIO",2023,198.5,15,"Retired"]
+].map(a=>({id:a[0],project:a[1],code:a[2],source:a[3],vintage:a[4],tco2e:a[5],buffer:a[6],status:a[7]}));
+const WALLETS=[
+ {biz:"B-0102",project:"RP-0007",code:"VCU-RMV",bal:597.2},{biz:"B-0102",project:"RP-0007",code:"VCU-RED",bal:96.3},
+ {biz:"B-0201",project:"RP-0007",code:"VCU-RMV",bal:220.0},{biz:"B-0103",project:"RP-0011",code:"INS-RMV",bal:130.9},
+ {biz:"B-0202",project:"RP-0011",code:"INS-RED",bal:61.7},{biz:"B-0202",project:"RP-0007",code:"VCU-RMV",bal:0}
+];
+const TX=[
+ ["TX-20260927-0041","2026-09-27","Transfer","B-0102","B-0201","RP-0007","VCU-RMV",220.0,"Settled"],
+ ["TX-20260925-0038","2026-09-25","Retirement","B-0202","—","RP-0007","VCU-RMV",198.5,"Settled"],
+ ["TX-20260919-0031","2026-09-19","Transfer","B-0103","B-0202","RP-0011","INS-RED",61.7,"Settled"],
+ ["TX-20260918-0030","2026-09-18","Buffer allocation","B-0103","Buffer pool","RP-0011","INS-RMV",23.1,"Settled"],
+ ["TX-20260912-0027","2026-09-12","Issuance","Registry","B-0103","RP-0011","INS-RMV",154.0,"Settled"],
+ ["TX-20260910-0026","2026-09-10","Transfer","B-0103","B-0201","RP-0011","INS-RMV",40.0,"Rejected"],
+ ["TX-20260902-0019","2026-09-02","Issuance","Registry","B-0102","RP-0007","VCU-RMV",700.7,"Settled"]
+].map(t=>({id:t[0],date:t[1],kind:t[2],from:t[3],to:t[4],project:t[5],code:t[6],qty:t[7],status:t[8]}));
+
+/* ---------- review notes ---------- */
+const NOTES={
+ users:[
+  ["Users and businesses are two lists with no join view.","You cannot see all people at a business, or their permissions, without switching screens. A business column with a click-through fixes the common case."],
+  ["No bulk actions.","Resending invites, suspending a leaver or exporting for audit is one user at a time."],
+  ["Invites have no age or expiry.","\"Invited\" rows from weeks ago look identical to today's. Show invite age and flag anything over 14 days."],
+  ["MFA state is invisible on the list.","Registry users move tradeable units. MFA should be visible, filterable and ideally enforced for Owner and Trader roles."],
+  ["Roles are business-agnostic.","A Trader role on a Promoter business makes no sense. Allowed roles should depend on business type."],
+  ["No audit trail on role or status changes.","A registry needs who changed what, when. The detail drawer shows the shape of it."]
+ ],
+ businesses:[
+  ["Business type gates what a business can own.","Only Promoter or Farmer can link to a project; Trader and Buyer only hold. The UI should enforce that at link time, not rely on ops knowing it.","Registry handover page, public view section"],
+  ["NCM has no business model at all.","The registry is the only place ownership lives, so onboarding a promoter needs a clear create-business then link-project flow.","Registry handover page, gap 1"]
+ ],
+ projects:[
+  ["The registry project must reference its NCM project.","Show the NCM ID on every row and block registration without it. Names are not unique in NCM.","Registry handover page, project reference"],
+  ["Description, municipality and coordinates are captured here, not in NCM.","The two records will drift. Pick one source and show which on the form.","Registry handover page, gap 6"]
+ ],
+ assets:[
+  ["Buffer rate disagreement.","Registry applies 15% to biogenic removals; NCM forecast has documented 20%. Show the rule that produced each buffer figure.","Registry handover page, gap 5"],
+  ["Retention buffer is undefined.","Retention rows are shown here as On hold with no buffer until the rule is agreed.","Registry handover page, open questions"],
+  ["Inset resale restriction is not visible.","INS assets can move only to approved partners. Flag them and show the partner list before a transfer.","Registry handover page, resale restriction"]
+ ],
+ wallets:[["Wallets are read-only in phase one.","Balances need a link to the transactions that produced them, otherwise support cannot explain a balance.","Registry handover page, public view"]],
+ transactions:[["Rejected transfers have no reason shown.","Ops needs the rule that blocked it (for example an inset to a non-partner) on the row.",""]]
+};
+
+/* ---------- state ---------- */
+const S={view:"users",q:"",status:"",type:"",role:"",sort:"name",dir:1,page:1,per:10,review:false};
+try{const r=localStorage.getItem("rbo-review");if(r==="1")S.review=true}catch(e){}
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+const fmt=n=>n==null?"—":n.toLocaleString("en-GB",{minimumFractionDigits:1,maximumFractionDigits:1});
+const pill=(t)=>{const m={Active:"ok",Registered:"ok",Issued:"ok",Settled:"ok",Invited:"info","Under validation":"info","Pending verification":"info",Suspended:"bad",Rejected:"bad","On hold":"warn",Draft:"mute",Retired:"mute"};return `<span class="pill p-${m[t]||"mute"}">${esc(t)}</span>`};
+const note=(n)=>`<span class="note" title="Review note ${n}">${n}</span>`;
+const bizName=id=>bizById[id]?bizById[id].name:id;
+
+const SECTIONS=[
+ ["People",[["users","Users",()=>USERS.length],["businesses","Businesses",()=>BUSINESSES.length]]],
+ ["Registry",[["projects","Projects",()=>PROJECTS.length],["assets","Assets",()=>ASSETS.length],["wallets","Wallets",()=>WALLETS.length],["transactions","Transactions",()=>TX.length]]]
+];
+function renderNav(){
+  $("#nav").innerHTML=SECTIONS.map(([g,items])=>`<div class="nav-label">${g}</div>`+items.map(([k,l,c])=>
+    `<button data-view="${k}" ${S.view===k?'aria-current="page"':""}><span>${l}</span><span class="count">${c()}</span></button>`).join("")).join("");
+}
+function notesBlock(){
+  const n=NOTES[S.view]||[];if(!n.length)return"";
+  return `<section class="notes" aria-label="Review notes"><h3>Review notes for this screen</h3><ol>${n.map(x=>`<li><b>${esc(x[0])}</b> ${esc(x[1])}${x[2]?` <span class="src">Source: ${esc(x[2])}</span>`:""}</li>`).join("")}</ol></section>`;
+}
+const banner=`<div class="banner">Replica for analysis. Structure is reconstructed from the registry back office specification, not captured from the live site. All names and figures are fictional.</div>`;
+
+/* ---------- users ---------- */
+function filteredUsers(){
+  const q=S.q.trim().toLowerCase();
+  let r=USERS.filter(u=>(!q||[u.name,u.email,u.bizName,u.id].some(v=>v.toLowerCase().includes(q)))
+    &&(!S.status||u.status===S.status)&&(!S.type||u.bizType===S.type)&&(!S.role||u.role===S.role));
+  r.sort((a,b)=>String(a[S.sort]).localeCompare(String(b[S.sort]),"en",{numeric:true})*S.dir);
+  return r;
+}
+function usersView(){
+  const act=USERS.filter(u=>u.status==="Active").length,inv=USERS.filter(u=>u.status==="Invited").length,
+        sus=USERS.filter(u=>u.status==="Suspended").length,mfa=Math.round(USERS.filter(u=>u.mfa).length/USERS.length*100);
+  const rows=filteredUsers(),pages=Math.max(1,Math.ceil(rows.length/S.per));if(S.page>pages)S.page=pages;
+  const slice=rows.slice((S.page-1)*S.per,S.page*S.per);
+  const opt=(arr,v)=>arr.map(o=>`<option value="${o}" ${o===v?"selected":""}>${o}</option>`).join("");
+  const th=(k,l)=>`<th data-sort="${k}" class="${S.sort===k?(S.dir>0?"asc":"desc"):""}">${l}</th>`;
+  return `${banner}
+  <div class="head"><div><h1>Users</h1><p class="sub">Everyone with a login to the registry, across all businesses.</p></div>
+   <div class="btns"><button class="btn" id="exportBtn">Export CSV${note(2)}</button><button class="btn primary" id="inviteBtn">Invite user</button></div></div>
+  ${notesBlock()}
+  <div class="stats">
+   <div class="stat"><div class="k">Active</div><div class="v">${act}</div><div class="d">of ${USERS.length} users</div></div>
+   <div class="stat"><div class="k">Pending invites${note(3)}</div><div class="v">${inv}</div><div class="d">oldest sent 2026-09-09</div></div>
+   <div class="stat"><div class="k">Suspended</div><div class="v">${sus}</div><div class="d">login blocked</div></div>
+   <div class="stat"><div class="k">MFA enabled${note(4)}</div><div class="v">${mfa}%</div><div class="d">not enforced</div></div>
+  </div>
+  <div class="filters">
+   <label class="search"><span aria-hidden="true" style="color:var(--ink-3)">&#9906;</span><input id="q" type="search" placeholder="Search name, email, business or user ID" value="${esc(S.q)}" aria-label="Search users"></label>
+   <select id="fStatus" aria-label="Status"><option value="">All statuses</option>${opt(["Active","Invited","Suspended"],S.status)}</select>
+   <select id="fType" aria-label="Business type"><option value="">All business types</option>${opt(["Operator","Promoter","Farmer","Trader","Buyer"],S.type)}</select>
+   <select id="fRole" aria-label="Role"><option value="">All roles</option>${opt(["Registry admin","Owner","Editor","Trader","Viewer"],S.role)}</select>
+  </div>
+  <div class="panel"><div class="table-wrap"><table>
+   <thead><tr>${th("name","User")}${th("bizName","Business"+note(1))}${th("bizType","Type")}${th("role","Role"+note(5))}${th("status","Status")}<th>MFA</th>${th("last","Last login")}${th("created","Created")}</tr></thead>
+   <tbody>${slice.length?slice.map(u=>`<tr data-user="${u.id}" tabindex="0">
+    <td class="who"><b>${esc(u.name)}</b><span>${esc(u.email)}</span></td>
+    <td>${esc(u.bizName)}</td><td><span class="tag">${u.bizType}</span></td><td>${esc(u.role)}</td><td>${pill(u.status)}</td>
+    <td>${u.mfa?'<span class="pill p-ok">On</span>':'<span class="pill p-mute">Off</span>'}</td>
+    <td class="mono">${u.last||"Never"}</td><td class="mono">${u.created}</td></tr>`).join(""):`<tr><td colspan="8" class="empty">No users match these filters.</td></tr>`}</tbody>
+  </table></div>
+  <div class="pager"><span>Showing ${rows.length?(S.page-1)*S.per+1:0}–${Math.min(S.page*S.per,rows.length)} of ${rows.length}</span>
+   <div class="btns"><button class="btn" id="prev" ${S.page<=1?"disabled":""}>Previous</button><button class="btn" id="next" ${S.page>=pages?"disabled":""}>Next</button></div></div></div>`;
+}
+function userDrawer(id){
+  const u=USERS.find(x=>x.id===id);if(!u)return;
+  const log=[[u.created+" 09:00","Account created by Registry Ops"],[u.created+" 09:01","Invite sent to "+u.email]];
+  if(u.last)log.push([u.last,"Last successful login"]);
+  if(u.status==="Suspended")log.push(["2026-06-02 11:40","Suspended by Kiera Holland (reason not recorded)"]);
+  $("#layer").innerHTML=`<div class="scrim" data-close></div><aside class="drawer" role="dialog" aria-modal="true" aria-label="${esc(u.name)}">
+   <header><div><h2>${esc(u.name)}</h2><div class="sub">${esc(u.email)}</div></div><button class="x" data-close aria-label="Close">&#10005;</button></header>
+   <div class="body">
+    <dl class="dl"><dt>User ID</dt><dd class="mono">${u.id}</dd><dt>Status</dt><dd>${pill(u.status)}</dd>
+     <dt>Business</dt><dd>${esc(u.bizName)} <span class="tag">${u.bizType}</span></dd><dt>Business ID</dt><dd class="mono">${u.biz}</dd>
+     <dt>Role</dt><dd>${esc(u.role)}</dd><dt>MFA</dt><dd>${u.mfa?"Enabled":"Not enabled"}</dd>
+     <dt>Last login</dt><dd class="mono">${u.last||"Never"}</dd><dt>Created</dt><dd class="mono">${u.created}</dd></dl>
+    <div><p class="sect-t">Can see</p><div class="btns">${(["Promoter","Farmer"].includes(u.bizType)?["Wallet","Transactions","Portfolio"]:u.bizType==="Operator"?["Everything"]:["Wallet","Transactions"]).map(t=>`<span class="tag">${t}</span>`).join("")}</div></div>
+    <div><p class="sect-t">Activity${note(6)}</p><ul class="log">${log.map(l=>`<li><time>${l[0].slice(0,10)}</time><span>${esc(l[1])}</span></li>`).join("")}</ul></div>
+    <div class="btns">${u.status==="Invited"?'<button class="btn" data-toast="Invite resent to '+esc(u.email)+'">Resend invite</button>':""}
+     <button class="btn" data-toast="Password reset link sent">Send password reset</button>
+     ${u.status==="Suspended"?'<button class="btn" data-toast="'+esc(u.name)+' reactivated">Reactivate</button>':'<button class="btn danger" data-toast="'+esc(u.name)+' suspended">Suspend</button>'}</div>
+   </div></aside>`;
+  $(".drawer .x").focus();
+}
+function inviteModal(){
+  $("#layer").innerHTML=`<div class="scrim" data-close></div><div class="modal"><form id="inviteForm" aria-label="Invite user">
+   <h2 style="margin:0;font-size:18px">Invite user</h2>
+   <label>Full name<input id="iName" required></label><label>Email<input id="iEmail" type="email" required></label>
+   <label>Business<select id="iBiz">${BUSINESSES.map(b=>`<option value="${b.id}">${esc(b.name)} (${b.type})</option>`).join("")}</select></label>
+   <label>Role<select id="iRole"><option>Owner</option><option>Editor</option><option>Trader</option><option>Viewer</option></select></label>
+   <div class="btns" style="justify-content:flex-end"><button type="button" class="btn" data-close>Cancel</button><button class="btn primary">Send invite</button></div>
+  </form></div>`;
+  $("#iName").focus();
+}
+
+/* ---------- other screens ---------- */
+function simpleTable(title,sub,cols,rows,extra=""){
+  return `${banner}<div class="head"><div><h1>${title}</h1><p class="sub">${sub}</p></div>${extra}</div>${notesBlock()}
+  <div class="panel"><div class="table-wrap"><table><thead><tr>${cols.map(c=>`<th style="cursor:default">${c}</th>`).join("")}</tr></thead>
+  <tbody>${rows.map(r=>`<tr style="cursor:default">${r.map(c=>`<td${c&&c.num?' class="num"':""}>${c&&c.html!==undefined?c.html:esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div></div>`;
+}
+const N=v=>({html:fmt(v),num:true});
+const H=h=>({html:h});
+const views={
+ users:usersView,
+ businesses:()=>simpleTable("Businesses","Organisations that own projects or hold assets.",["ID","Name","Type"+note(1),"Country","Projects","Users"],
+   BUSINESSES.map(b=>[H(`<span class="mono">${b.id}</span>`),b.name,H(`<span class="tag">${b.type}</span>`),b.country,{html:b.projects,num:true},{html:USERS.filter(u=>u.biz===b.id).length,num:true}]),
+   `<div class="btns"><button class="btn primary" data-toast="Replica: create business form not modelled">New business</button></div>`),
+ projects:()=>simpleTable("Projects","Registry project records. Each points at the NCM project it came from.",["Registry ID","NCM ID"+note(1),"Name","Owner","Status","Vintages","Fields"],
+   PROJECTS.map(p=>[H(`<span class="mono">${p.id}</span>`),H(`<span class="mono">${p.ncm}</span>`),p.name,bizName(p.biz),H(pill(p.status)),H(`<span class="mono">${p.vintages}</span>`),{html:p.fields,num:true}])),
+ assets:()=>simpleTable("Assets","One row per field, vintage, asset type and source.",["Asset ID","Project","Code","Source","Vintage","tCO₂e","Buffer"+note(1),"Status"],
+   ASSETS.map(a=>[H(`<span class="mono">${a.id}</span>`),H(`<span class="mono">${a.project}</span>`),H(`<span class="tag">${a.code}</span>`+(a.code.startsWith("INS")?note(3):"")),a.source,H(`<span class="mono">${a.vintage}</span>`),N(a.tco2e),{html:a.buffer==null?"Undefined"+note(2):a.buffer+"%",num:true},H(pill(a.status))])),
+ wallets:()=>simpleTable("Wallets","Balances by business, project and asset code. Read-only.",["Business","Project","Code","Balance tCO₂e"],
+   WALLETS.map(w=>[bizName(w.biz),H(`<span class="mono">${w.project}</span>`),H(`<span class="tag">${w.code}</span>`),N(w.bal)])),
+ transactions:()=>simpleTable("Transactions","Ledger of issuance, transfers, buffer allocations and retirements.",["Transaction ID","Date","Type","From","To","Project","Code","tCO₂e","Status"],
+   TX.map(t=>[H(`<span class="mono">${t.id}</span>`),H(`<span class="mono">${t.date}</span>`),t.kind,bizName(t.from),bizName(t.to),H(`<span class="mono">${t.project}</span>`),H(`<span class="tag">${t.code}</span>`),N(t.qty),H(pill(t.status)+(t.status==="Rejected"?note(1):""))]))
+};
+
+function render(){
+  document.getElementById("app").classList.toggle("review",S.review);
+  $("#reviewBtn").setAttribute("aria-pressed",S.review);
+  renderNav();
+  $("#crumb").textContent=SECTIONS.flatMap(s=>s[1]).find(i=>i[0]===S.view)[1];
+  const active=document.activeElement&&document.activeElement.id;
+  $("#view").innerHTML=views[S.view]();
+  if(active==="q"){const q=$("#q");q.focus();q.setSelectionRange(q.value.length,q.value.length)}
+}
+function toast(msg){const t=document.createElement("div");t.className="toast";t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
+function closeLayer(){$("#layer").innerHTML=""}
+
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-view],[data-sort],[data-user],[data-close],[data-toast],#prev,#next,#inviteBtn,#exportBtn,#reviewBtn");
+  if(!t)return;
+  if(t.dataset.view){S.view=t.dataset.view;S.page=1;render();}
+  else if(t.dataset.sort){const k=t.dataset.sort;S.dir=S.sort===k?-S.dir:1;S.sort=k;render();}
+  else if(t.dataset.user)userDrawer(t.dataset.user);
+  else if(t.dataset.toast){toast(t.dataset.toast);closeLayer();}
+  else if(t.dataset.close!==undefined)closeLayer();
+  else if(t.id==="prev"){S.page--;render();}
+  else if(t.id==="next"){S.page++;render();}
+  else if(t.id==="inviteBtn")inviteModal();
+  else if(t.id==="exportBtn")toast(`Export prepared: ${filteredUsers().length} users (replica, no file)`);
+  else if(t.id==="reviewBtn"){S.review=!S.review;try{localStorage.setItem("rbo-review",S.review?"1":"0")}catch(e){}render();}
+});
+document.addEventListener("input",e=>{if(e.target.id==="q"){S.q=e.target.value;S.page=1;render();}});
+document.addEventListener("change",e=>{const m={fStatus:"status",fType:"type",fRole:"role"}[e.target.id];if(m){S[m]=e.target.value;S.page=1;render();}});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape")closeLayer();
+  if(e.key==="Enter"&&e.target.dataset&&e.target.dataset.user)userDrawer(e.target.dataset.user);
+});
+document.addEventListener("submit",e=>{
+  if(e.target.id!=="inviteForm")return;e.preventDefault();
+  const b=bizById[$("#iBiz").value],name=$("#iName").value.trim(),email=$("#iEmail").value.trim();
+  USERS.unshift({id:"U-"+String(2000+USERS.length),name,email,biz:b.id,bizName:b.name,bizType:b.type,role:$("#iRole").value,status:"Invited",last:"",created:"2026-09-28",mfa:false});
+  closeLayer();S.view="users";render();toast("Invite sent to "+email);
+});
+render();
+})();
+</script>
