@@ -1,0 +1,3 @@
+# Scratch space the Claude Code harness creates for agent worktrees.
+# Not project content: it is per-session and must never be committed.
+.claude/
